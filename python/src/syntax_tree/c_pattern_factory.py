@@ -6,19 +6,47 @@ from syntax_tree.ast_shower import ASTShower
 
 class CPatternFactory:
 
+    reserved_name = '__rejuvenation__reserved__'
+
     def __init__(self, factory: ASTFactory):
         self.factory = factory
 
-
     def create_expression(self, text:str):
-        root =  self._create( '$variable = (' + text +');')
+        keywords = CPatternFactory._get_keywords_fromText(text)
+        fullText = '\n'.join(CPatternFactory._to_declaration(keywords)) + f'\nint {CPatternFactory.reserved_name} = ({text});'
+        root =  self._create( fullText)
         #return the first expression found in the tree as a ASTNode
         return next(ASTFinder.find_kind(root, 'PAREN_EXPR')).get_children()[0]
 
+    def create_declarations(self, text:str, types: list[str] = [] , parameters: list[str] = [] ):
+        return self._create_body(text, types, parameters)
+
+    def create_declaration(self, text:str, types: list[str] = [] , parameters: list[str] = [] ):
+        declarations = list(self.create_declarations(text, types, parameters))
+        assert len(declarations) == 1, "Only one declaration is expected"
+        return declarations[0]
+    
+    def create_statements(self, text:str, types: list[str] = []):
+        # create a reference for all used variables excluding the specified types
+        parameters = [ par for par in CPatternFactory._get_keywords_fromText(text) if not par in types]
+        return self._create_body(text, types, parameters)
+
+    def create_statement(self, text:str, types: list[str] = []):
+        statements = list(self.create_statements(text, types))
+        assert len(statements) == 1, "Only one statement is expected"
+        return statements[0]
+    
+    def _create_body(self, text, types, parameters):
+        fullText = \
+            '\n'.join(CPatternFactory._to_typedef(types)) +'\n'\
+            '\n'.join(CPatternFactory._to_declaration(parameters)) +'\n'\
+             '\nvoid '+CPatternFactory.reserved_name+'(){\n' +text +'\n}'
+        root =  self._create( fullText)
+        #return the first expression found in the tree as a ASTNode
+        return  next(ASTFinder.find_kind(root, 'COMPOUND_STMT')).get_children()
+
     def _create(self, text:str):  
-        keywords = CPatternFactory._get_keywords_fromText(text)
-        fullText = '\n'.join(CPatternFactory._to_declaration(keywords)) + f'int __reserved__ =({text})'
-        atu =  self.factory.create_from_text( fullText, 'test.cpp')
+        atu =  self.factory.create_from_text( text, 'test.cpp')
         ASTShower.show_node(atu)
         return atu
 
@@ -43,6 +71,9 @@ class CPatternFactory:
     def _to_declaration(keywords:list[str], prefix: str ='int ', postfix: str =';') -> list[str]:
         return  [ prefix + keyword + postfix for keyword in keywords]
 
+    @staticmethod
+    def _to_typedef(keywords:list[str], prefix: str ='typedef int ', postfix: str =';') -> list[str]:
+        return  [ prefix + keyword + postfix for keyword in keywords]
 
 if __name__ == "__main__":
     print(CPatternFactory._get_dollar_keywords_fromText('struct $type;struct $name; $type a = $name; int b = 4; $$x = $$y'))
