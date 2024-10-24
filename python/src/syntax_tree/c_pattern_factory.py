@@ -8,8 +8,9 @@ class CPatternFactory:
 
     reserved_name = '__rejuvenation__reserved__'
 
-    def __init__(self, factory: ASTFactory):
+    def __init__(self, factory: ASTFactory, language: str = 'c'):
         self.factory = factory
+        self.language = language
 
     def create_expression(self, text:str):
         keywords = CPatternFactory._get_keywords_fromText(text)
@@ -18,36 +19,37 @@ class CPatternFactory:
         #return the first expression found in the tree as a ASTNode
         return next(ASTFinder.find_kind(root, 'PAREN_EXPR')).get_children()[0]
 
-    def create_declarations(self, text:str, types: list[str] = [] , parameters: list[str] = [] ):
-        return self._create_body(text, types, parameters)
+    def create_declarations(self, text:str, types: list[str] = [] , parameters: list[str] = [], extra_declarations: list[str] = []):
+        return self._create_body(text, types, parameters, extra_declarations)
 
-    def create_declaration(self, text:str, types: list[str] = [] , parameters: list[str] = [] ):
+    def create_declaration(self, text:str, types: list[str] = [] , parameters: list[str] = [], extra_declarations: list[str] = []):
         declarations = list(self.create_declarations(text, types, parameters))
         assert len(declarations) == 1, "Only one declaration is expected"
         return declarations[0]
     
-    def create_statements(self, text:str, types: list[str] = []):
+    def create_statements(self, text:str, types: list[str] = [], extra_declarations: list[str] = []):
         # create a reference for all used variables excluding the specified types
-        parameters = [ par for par in CPatternFactory._get_keywords_fromText(text) if not par in types]
-        return self._create_body(text, types, parameters)
+        parameters = [ par for par in CPatternFactory._get_keywords_fromText(text) if not par in types and not any(par in ed for ed in extra_declarations)]
+        return self._create_body(text, types, parameters, extra_declarations)
 
-    def create_statement(self, text:str, types: list[str] = []):
-        statements = list(self.create_statements(text, types))
+    def create_statement(self, text:str, types: list[str] = [], extra_declarations: list[str] = []):
+        statements = list(self.create_statements(text, types, extra_declarations))
         assert len(statements) == 1, "Only one statement is expected"
         return statements[0]
     
-    def _create_body(self, text, types, parameters):
+    def _create_body(self, text, types, parameters, extra_declarations):
         fullText = \
             '\n'.join(CPatternFactory._to_typedef(types)) +'\n'\
             '\n'.join(CPatternFactory._to_declaration(parameters)) +'\n'\
+            '\n'.join(extra_declarations) +'\n'\
              '\nvoid '+CPatternFactory.reserved_name+'(){\n' +text +'\n}'
-        root =  self._create( fullText)
+        root =  self._create(fullText)
         #return the first expression found in the tree as a ASTNode
         return  next(ASTFinder.find_kind(root, 'COMPOUND_STMT')).get_children()
 
     def _create(self, text:str):  
-        atu =  self.factory.create_from_text( text, 'test.cpp')
-        ASTShower.show_node(atu)
+        atu =  self.factory.create_from_text( text, 'test.' + self.language)
+        # ASTShower.show_node(atu)
         return atu
 
     @staticmethod
@@ -74,6 +76,12 @@ class CPatternFactory:
     @staticmethod
     def _to_typedef(keywords:list[str], prefix: str ='typedef int ', postfix: str =';') -> list[str]:
         return  [ prefix + keyword + postfix for keyword in keywords]
+
+
+class CPPPatternFactory(CPatternFactory):
+
+    def __init__(self, factory: ASTFactory):
+        super().__init__(factory, 'cpp')
 
 if __name__ == "__main__":
     print(CPatternFactory._get_dollar_keywords_fromText('struct $type;struct $name; $type a = $name; int b = 4; $$x = $$y'))

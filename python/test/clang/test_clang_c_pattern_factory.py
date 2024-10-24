@@ -88,7 +88,10 @@ class Miscellaneous(TestCPatternFactory):
 
     def test_test(self):
         factory = ASTFactory(ClangASTNode)
-        atu = factory.create_from_text('int a=2,b=3;', 't.c')
+        code = 'int $a;int (*fp) $f;\n\nvoid __rejuvenation__reserved__(){\n$f($a);\n}'
+        atu = factory.create_from_text(code, 't.c')
+        ASTShower.show_node(atu)
+        atu = factory.create_from_text('class A {}; int a; int (*fp) $f; void x(){a=$f(a);}', 't.cpp')
         ASTShower.show_node(atu)
         # atu = factory.create_from_text('void f(){a();}', 't.c')
         # ASTShower.show_node(atu)

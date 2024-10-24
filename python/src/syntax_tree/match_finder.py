@@ -7,8 +7,7 @@ import copy
 from typing import Callable, Iterator, Optional, Type, TypeVar
 from .ast_node import ASTNode
 
-ASTNodeType = TypeVar("ASTNodeType", bound='ASTNode')
-
+VERBOSE = False
 class MatchUtils:
 
     EXACT_MATCH = 'EXACT_MATCH'
@@ -16,7 +15,11 @@ class MatchUtils:
     @staticmethod
     def is_match(src: ASTNode, cmp: ASTNode)-> bool:
         return src.get_kind() == cmp.get_kind() and src.get_properties() == cmp.get_properties()
-    
+
+    @staticmethod
+    def is_kind_match(src: ASTNode, cmp: ASTNode)-> bool:
+        return src.get_kind() == cmp.get_kind()
+
     @staticmethod
     def is_wildcard(target: ASTNode|str)-> bool:
         return MatchUtils.is_single_wildcard(target) or MatchUtils.is_multi_wildcard(target)
@@ -47,6 +50,7 @@ class KeyMatch:
 class PatternMatch:
     def __init__(self, src_nodes: list[ASTNode], patterns: list[ASTNode]) -> None:
         self.keyMatches: list[KeyMatch] = []
+        self.evaluated_nodes: list[ASTNode] = []
         self.src_nodes = src_nodes
         self.patterns = patterns
 
@@ -55,6 +59,7 @@ class PatternMatch:
         clone = PatternMatch(self.src_nodes, self.patterns)
         # clone the key matches
         clone.keyMatches = [keyMatch.clone() for keyMatch in self.keyMatches]
+        clone.evaluated_nodes = self.evaluated_nodes[:]
         return clone
 
     def query_create(self, key: str)-> KeyMatch:
@@ -62,70 +67,20 @@ class PatternMatch:
             return self.keyMatches[-1]
         self.keyMatches.append(KeyMatch(key))
         return self.keyMatches[-1]
-    def collect_nodes(self)-> list[ASTNode]:
-        return [node for keyMatch in self.keyMatches for node in keyMatch.nodes]
+   
+    def get_evaluated_nodes(self)-> list[ASTNode]:
+        return self.evaluated_nodes
+
+    def add_evaluated_node(self, node: ASTNode):
+        self.evaluated_nodes.append(node)
+    
+    def get_dict(self):
+        return {keyMatch.key: keyMatch.nodes for keyMatch in self.keyMatches}
 
     def validate(self):
-        return self._reassign_consecutive_wildcards() and self._check_single_matches() and self._check_duplicate_matches()
+        return self._check_and_correct_single_matches() and self._check_duplicate_matches()
 
-    def _get_consecutive_wildcards(self)-> Iterator[list[KeyMatch]]:
-        consecutiveMatches = []
-        for match in self.keyMatches:
-            if (MatchUtils.is_wildcard(match.key)):
-                consecutiveMatches.append(match)
-            else:   
-                if len(consecutiveMatches) > 1:
-                    yield consecutiveMatches
-                consecutiveMatches = []
-        if len(consecutiveMatches) > 1:
-            yield consecutiveMatches
-
-    def _reassign_consecutive_wildcards(self) -> bool:
-        """
-        Reassigns nodes to consecutive wildcards in the pattern.
-        This method processes consecutive wildcards in the pattern and attempts to reassign nodes to them.
-        It ensures that each single wildcard gets exactly one node and multi-wildcards get the remaining nodes.
-        If there are not enough nodes to assign to all single wildcards, the method returns False.
-        Returns:
-            bool: True if the reassignment is successful, False otherwise.
-        """
-        for consecutive_matches in self._get_consecutive_wildcards():
-            count_single_wildcards = sum(1 for match in consecutive_matches if MatchUtils.is_single_wildcard(match.key))
-            count_multi_wildcards = sum(1 for match in consecutive_matches if MatchUtils.is_multi_wildcard(match.key))
-            collected_nodes =  [node for nodes in consecutive_matches for node in nodes.nodes]
-            if len(collected_nodes) < count_single_wildcards:
-                # cannot assign a node to all single wildcards
-                return False
-            # ceil division to ensure all nodes are assigned
-            remaining_nodes_for_multi_wildcards = len(collected_nodes) - count_single_wildcards
-            nodes_left_per_multi_wildcards =  0 if count_multi_wildcards==0 else math.ceil(remaining_nodes_for_multi_wildcards/count_multi_wildcards)
-            multi_wildcard_nodes_left = len(collected_nodes)  - count_single_wildcards
-            #collected nodes need to be distributed of the wildcard matches. first the single wildcards are assigned a node
-            #then the remaining nodes are distributed to the multi wildcards
-            index = 0
-            for match in consecutive_matches:
-                if MatchUtils.is_single_wildcard(match.key):
-                    match.nodes = collected_nodes[index:index + 1]
-                    index += 1
-                elif MatchUtils.is_multi_wildcard(match.key):
-                    number_to_assign = min(nodes_left_per_multi_wildcards, multi_wildcard_nodes_left)
-                    multi_wildcard_nodes_left -= number_to_assign
-                    match.nodes = collected_nodes[index:index + number_to_assign]
-                    index += number_to_assign
-
-            # for match in consecutive_matches:
-            #     if MatchUtils.is_single_wildcard(match.key):
-            #         match.nodes = collected_nodes[0:1]
-            #         collected_nodes.remove(collected_nodes[0])
-            #     elif MatchUtils.is_multi_wildcard(match.key):
-            #         match.nodes = collected_nodes[0:nodes_left_per_multi_wildcards]
-            #         collected_matches = collected_nodes[nodes_left_per_multi_wildcards:]
-            # at this point no additional nodes should be left
-            if index < len(collected_nodes):
-                return False
-        return True
-
-    def _check_single_matches(self):
+    def _check_and_correct_single_matches(self):
         """
         Checks for single matches in the keyMatches attribute.
 
@@ -134,7 +89,14 @@ class PatternMatch:
         Returns:
             bool: False if any keyMatch has more than one node, otherwise None.
         """
-        return all(len(keyMatch.nodes) == 1 for keyMatch in self.keyMatches if MatchUtils.is_single_wildcard(keyMatch.key))
+        #first remove potential children with the same name
+        for keyMatch in self.keyMatches:
+            keyMatch.nodes = [node for node in keyMatch.nodes if node.get_parent() not in keyMatch.nodes]
+
+        result =  all(len(keyMatch.nodes) == 1 for keyMatch in self.keyMatches if MatchUtils.is_single_wildcard(keyMatch.key))
+        if not result and VERBOSE:
+            print(f"FAILED on single match")
+        return result
     
     def _check_duplicate_matches(self):
         """
@@ -153,6 +115,8 @@ class PatternMatch:
             transposed: list[list[ASTNode]] = [list(row) for row in zip(*same)] # create tuples of nodes per index
             for matching_nodes in transposed:
                 if not all(map(lambda node: MatchUtils.is_match(node, matching_nodes[0]), matching_nodes[1:])):
+                    if VERBOSE:
+                        print(f"FAILED on duplicate match")
                     return False
         return True
 
@@ -174,27 +138,26 @@ class MatchFinder:
             - Nodes found in a match will not be included in subsequent matches.
         """
         newIndex = 0
-        tu_nodes = [n for n in srcNodes]# if n.is_part_of_translation_unit()]
-        while newIndex < len(tu_nodes):
-            target_nodes = tu_nodes[newIndex:]
+        while newIndex < len(srcNodes):
+            target_nodes = srcNodes[newIndex:]
             for patterns in patterns_list:
                 pattern_match = MatchFinder.match_pattern(PatternMatch(target_nodes,patterns), target_nodes, patterns)
                 newIndex += 1
 
                 if pattern_match:
-                    for included_node in pattern_match.collect_nodes():
-                        if included_node in tu_nodes:
+                    for included_node in pattern_match.get_evaluated_nodes():
+                        if included_node in srcNodes:
                             # skip all nodes that are included in the match
-                            newIndex = max(tu_nodes.index(included_node)+1, newIndex)
+                            newIndex = max(srcNodes.index(included_node)+1, newIndex)
                     yield pattern_match
                     break # only one match is needed
         #recursively include all children
         if recursive:
-            for node in tu_nodes:
+            for node in srcNodes:
                 yield from MatchFinder.find_all(node.get_children(), *patterns_list)
 
     @staticmethod
-    def match_pattern(patternMatch: PatternMatch, srcNodes: list[ASTNode], patterns: list[ASTNode])-> Optional[PatternMatch]:
+    def match_pattern(patternMatch: PatternMatch, srcNodes: list[ASTNode], patterns: list[ASTNode], depth=0)-> Optional[PatternMatch]:
         """
         Matches a given pattern against a this of source nodes.
         Args:
@@ -205,9 +168,13 @@ class MatchFinder:
             Optional[PatternMatch]: The updated pattern match if the pattern is successfully matched,
                                     otherwise None.
         """
-        only_wild_cards = all(MatchUtils.is_wildcard(p) for p in patterns)
+        only_multi_wild_cards = all(MatchUtils.is_multi_wildcard(p) for p in patterns)
         # if there are no patterns or only wildcards left and no source nodes, return the current match
-        if len(patterns) == 0 or (only_wild_cards and len(srcNodes) == 0):
+        if len(patterns) == 0 or (only_multi_wild_cards and len(srcNodes) == 0):
+            # we might end up with a multi wildcard at the end of the pattern list without nodes so add it
+            if only_multi_wild_cards and len(patterns) ==1 :
+                patternMatch.query_create(patterns[0].get_name())
+
             if patternMatch.validate():
                 return patternMatch
             return None
@@ -216,21 +183,42 @@ class MatchFinder:
             return None
 
         srcNode = srcNodes[0]
+        patternMatch.add_evaluated_node(srcNode)
         patternNode = patterns[0]
-        if( MatchUtils.is_wildcard(patternNode)):
+
+        indent = ' '*depth*4
+        if VERBOSE:
+            print(indent+ f"evaluating {srcNode.get_raw_signature()} against {patternNode.get_raw_signature()}")
+
+        if MatchUtils.is_multi_wildcard(patternNode):
             wildcard_match = patternMatch.query_create(patternNode.get_name())
             if len(patterns) > 1:
-                nextMatch = MatchFinder.match_pattern(patternMatch, srcNodes, patterns[1:])
+                # multiplicity of multi-wildcards is 0 so first try to match the next pattern
+                # TODO greedy approach until no match
+                nextMatch = MatchFinder.match_pattern(patternMatch.clone(), srcNodes, patterns[1:], depth)
                 if nextMatch:                 
                     return nextMatch  
+            if VERBOSE:
+                print(indent+ f"  multi wildcard {patternNode.get_raw_signature()} matched {srcNode.get_raw_signature()}")
             wildcard_match.add_node(srcNode)
-            return MatchFinder.match_pattern(patternMatch, srcNodes[1:], patterns)
-        elif MatchUtils.is_match(srcNode, patternNode):
-            # build a path that contains all nodes involved in the match
-            patternMatch.query_create(MatchUtils.EXACT_MATCH).add_node(srcNode)
+            return MatchFinder.match_pattern(patternMatch, srcNodes[1:], patterns, depth)
+        elif MatchUtils.is_single_wildcard(patternNode) or MatchUtils.is_match(srcNode, patternNode):
+            # in case of children the kind must also match (which is not checked for wildcard yet)
+            if patternNode.get_children() and (not MatchUtils.is_kind_match(srcNode, patternNode)):
+                return None
+
+            if MatchUtils.is_single_wildcard(patternNode):
+                wildcard_match = patternMatch.query_create(patternNode.get_name())
+                wildcard_match.add_node(srcNode)
+            if VERBOSE:
+                print(indent+ f"  {patternNode.get_raw_signature()} matched {srcNode.get_raw_signature()}")
+
             if patternNode.get_children():
-                if not  MatchFinder.match_pattern(patternMatch, srcNode.get_children(), patternNode.get_children()):
+                foundMatch =  MatchFinder.match_pattern(patternMatch, srcNode.get_children(), patternNode.get_children(),depth+1)
+                if not foundMatch:
                     return None
-            return MatchFinder.match_pattern(patternMatch, srcNodes[1:], patterns[1:])
+                patternMatch = foundMatch
+            # invariant: a match is found if the current nodes match and their successors match
+            return MatchFinder.match_pattern(patternMatch, srcNodes[1:], patterns[1:], depth)
         return None
 

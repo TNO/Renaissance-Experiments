@@ -3,6 +3,7 @@ from pathlib import Path
 from typing import Optional
 from syntax_tree.ast_node import ASTNode
 from typing_extensions import override
+import re
 
 from clang.cindex import TranslationUnit, Index, Config
 
@@ -13,7 +14,7 @@ class ClangASTNode(ASTNode):
     print(Path(__file__).parent.parent.parent.parent / '.venv/Lib/site-packages/clang/native')
     Config.set_library_path(Path(__file__).parent.parent.parent.parent / '.venv/Lib/site-packages/clang/native')
     index = Index.create()
-    parse_args=['-fparse-all-comments', '-ferror-limit=0', '-Xclang', '-ast-dump', '-fsyntax-only']
+    parse_args=['-fparse-all-comments', '-ferror-limit=0', '-Xclang', '-ast-dump=json', '-fsyntax-only']
 
     def __init__(self, node, translation_unit:TranslationUnit,  parent =  None):
         super().__init__(self if parent is None else parent.root)
@@ -41,7 +42,10 @@ class ClangASTNode(ASTNode):
     
     @override
     def get_name(self) -> str:
-        return self.node.spelling  #TODO fix
+        try:
+            return self.node.spelling #TODO fix
+        except: 
+            return EMPTY_STR
 
     @override
     def get_containing_filename(self) -> str:
@@ -70,21 +74,61 @@ class ClangASTNode(ASTNode):
 
     @override
     def get_kind(self) -> str: 
-        return str(self.node.kind.name) 
+        try:
+            return str(self.node.kind.name)
+        except Exception as e:
+            return EMPTY_STR
 
     @override
-    def getProperties(self) -> dict[str, int|str]: 
-        return EMPTY_DICT
+    def get_properties(self) -> dict[str, int|str]: 
+        result  =  {}
+        name = self.get_name()
+        if name:
+            result['name'] = name
+            
+        if self.get_kind() == 'BINARY_OPERATOR':
+            #TODO remove below code after clang release that supports the getOpCode() statement
+            children = self.get_children()
+            start_offset = children[0].get_start_offset() + children[0].get_length()
+            end_offset = children[1].get_start_offset()
+            operator = self.get_content(start_offset, end_offset)
+            result['operator'] = operator.strip()
+            # next statement works in C++ but not in Python (yet) will be released later
+            # result['operator'] =  self.node.getOpCode()
+        if self.get_kind().endswith('_LITERAL'):
+            self.addTokens(result, 'LITERAL')
+        if self.get_kind() =='DECL_REF_EXPR':
+            self.addTokens(result, 'LITERAL')
+
+        is_all = { attr[len('is_'):]: getattr(self.node, attr)() for attr in dir(self.node) if attr.startswith('is_') and  getattr(self.node, attr)()}
+        result.update(is_all)
+        return result
     
     @override
     def get_parent(self) -> Optional['ClangASTNode']: 
-        return self.parent
+        return  self.parent
 
     @override
     def get_children(self) -> list['ClangASTNode']: 
         if self._children is None:
-            self._children = [ ClangASTNode(n, self.translation_unit, self) for n in self.node.get_children()]
+            self._children = [ ClangASTNode(ClangASTNode.remove_wrapper(n), self.translation_unit, self) for n in self.node.get_children()]
         return self._children
+
+    def addTokens(self,  result: dict[str,str], *tokenKind):
+            for token in self.node.get_tokens():
+                # find all attr of token that are of type str or int
+                kind = str(token.kind).split('.')[-1]
+                if kind in tokenKind:
+                    result[kind] = token.spelling
+    
+    @staticmethod
+    def remove_wrapper(cursor):
+        try:
+            if cursor.kind.name.startswith('UNEXPOSED') and len(list(cursor.get_children())) == 1:
+                return  ClangASTNode.remove_wrapper(list(cursor.get_children())[0])
+        except:
+            pass
+        return cursor
 
 # Function to recursively visit AST nodes
 def visit_node(node, depth=0):

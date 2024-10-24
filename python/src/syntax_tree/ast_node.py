@@ -20,7 +20,7 @@ class ASTNode(ABC):
         self.cache = {}
     
     def isMatching(self, other: 'ASTNode') -> bool:
-        return self.get_kind() == other.get_kind and self.getProperties() == other.getProperties()
+        return self.get_kind() == other.get_kind and self.get_properties() == other.get_properties()
         
     def is_part_of_translation_unit(self) -> bool:
         return self.get_containing_filename() == self.root.get_containing_filename()
@@ -80,7 +80,7 @@ class ASTNode(ABC):
         pass
 
     @abstractmethod
-    def getProperties(self) -> dict[str, int|str]: 
+    def get_properties(self) -> dict[str, int|str]: 
         pass
     
     @abstractmethod

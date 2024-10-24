@@ -7,7 +7,7 @@ from syntax_tree.ast_node import ASTNode
 class ASTShower:
     @staticmethod
     def show_node(astNode: ASTNode):
-        print(ASTShower.get_node(astNode))
+        print('\n'+ASTShower.get_node(astNode))
 
     @staticmethod
     def get_node(astNode: ASTNode):
