@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from collections.abc import Sequence
 from functools import cache
 from typing import TYPE_CHECKING
@@ -13,7 +15,7 @@ if TYPE_CHECKING:
 
 
 class ASTRefactorActions:
-    def __init__(self, processor: ASTProcessor, pattern_factory: "CPPPatternFactory") -> None:
+    def __init__(self, processor: ASTProcessor, pattern_factory: CPPPatternFactory) -> None:
         self.processor = processor
         self.pattern_factory = pattern_factory
         self.replaced: set[int] = set()
