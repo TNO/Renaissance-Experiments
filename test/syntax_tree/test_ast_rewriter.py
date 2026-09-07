@@ -1190,7 +1190,7 @@ class TestSyntaxAwareAdjacentComposition:
         pattern: str = " $stmt1; $stmt2; "
 
         atu = factory.create_from_text(code, "test.c")
-        pattern = CPatternFactory(factory).create_statements(PATTERN)
+        pattern = CPatternFactory(factory).create_statements(pattern)
         matches = list(find_all([atu], [pattern]))
 
         assert matches, "A match expected"
