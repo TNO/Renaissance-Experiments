@@ -1177,10 +1177,6 @@ class String(Literal):
     pass
 
 
-class Catch(Statement):
-    pass
-
-
 class ComparisionOperation(Expression):
     pass
 

@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Any, Self
 
 from renaissance.integrations.python.ast.util import convert
-from renaissance.integrations.types import *
+from renaissance.integrations.types import KIND_MAP, OPERATOR_MAP, Assert, FunctionDef, Global, ImplicitNode, Tuple, UnknownType
 from renaissance.syntax_tree.match_finder import find_in_list
 from renaissance.utils.ast_utils import (
     format_node,
@@ -35,8 +35,7 @@ class ImplicitNode(ast.Name):
     }
 
     def __init__(self, name, children=None):
-        super().__init__(name)
-        self.body = children or []
+        super().__init__(name, children or [])
         self.lineno = 0
         self.col_offset = 0
         self.end_lineno = 0
@@ -100,20 +99,18 @@ class PythonRstTranslationUnit:
                 if node.name not in self._nodes:
                     self._nodes[node.name] = node
             case "arg":
-                if node.name != "self":
-                    if node.name not in self._nodes:
-                        self._nodes[node.name] = node
+                if node.name != "self" and node.name not in self._nodes:
+                    self._nodes[node.name] = node
 
     def create_references(self, ast_node) -> None:
         assert isinstance(ast_node, PythonRstNode), f"Expected PythonASTNode but got {type(ast_node)}"
         match type(ast_node.node):
             case ast.arg:
-                if ast_node.name != "self":
-                    if isinstance(ast_node.node, ast.arg) and isinstance(ast_node.node.annotation, ast.Name):
-                        node_id = ast_node.name
-                        ref_id = ast_node.node.annotation.id
-                        ref_kind = "TypeRef"
-                        self.add_reference(node_id, ref_id, ref_kind)
+                if ast_node.name != "self" and isinstance(ast_node.node, ast.arg) and isinstance(ast_node.node.annotation, ast.Name):
+                    node_id = ast_node.name
+                    ref_id = ast_node.node.annotation.id
+                    ref_kind = "TypeRef"
+                    self.add_reference(node_id, ref_id, ref_kind)
             case ast.Assign:
                 if isinstance(ast_node.node, ast.Assign):
                     for n in ast_node.node.targets:
@@ -125,16 +122,15 @@ class PythonRstTranslationUnit:
                                 ref_kind = "CallRef"
                                 self.add_reference(node_id, ref_id, ref_kind)
             case ast.AnnAssign:
-                if isinstance(ast_node.node, ast.AnnAssign):
-                    if (
-                        ast_node.node.annotation
-                        and isinstance(ast_node.node.target, ast.Name)
-                        and isinstance(ast_node.node.annotation, ast.Name)
-                    ):
-                        node_id = ast_node.node.target.id
-                        ref_id = ast_node.node.annotation.id
-                        ref_kind = "TypeRef"
-                        self.add_reference(node_id, ref_id, ref_kind)
+                if isinstance(ast_node.node, ast.AnnAssign) and (
+                    ast_node.node.annotation
+                    and isinstance(ast_node.node.target, ast.Name)
+                    and isinstance(ast_node.node.annotation, ast.Name)
+                ):
+                    node_id = ast_node.node.target.id
+                    ref_id = ast_node.node.annotation.id
+                    ref_kind = "TypeRef"
+                    self.add_reference(node_id, ref_id, ref_kind)
             case ast.ClassDef:
                 if isinstance(ast_node.node, ast.ClassDef):
                     node = ast_node.node
@@ -312,7 +308,7 @@ class PythonRstNode:
         # Keep a uniform loader signature across AST node implementations.
         # Python's AST parser does not need extra arguments or a working dir.
         _ = extra_args, working_dir
-        with open(file_path) as file:
+        with Path(file_path).open() as file:
             content = file.read()
             return PythonRstNode.load_from_text(content, str(file_path))
 
@@ -350,10 +346,7 @@ class PythonRstNode:
             name = self.node.target.id
         elif isinstance(self.node, ast.Assign) and len(self.node.targets) == 1:
             target = self.node.targets[0]
-            if isinstance(target, ast.Name):
-                name = target.id
-            else:
-                name = self.ast_type.__name__
+            name = target.id if isinstance(target, ast.Name) else self.ast_type.__name__
         elif isinstance(self.node, ast.Name):
             name = self.node.id
         elif isinstance(self.node, ast.arg):

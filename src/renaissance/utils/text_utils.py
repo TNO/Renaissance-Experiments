@@ -1,8 +1,8 @@
-import os
 import re
 import subprocess
 import sys
 import tempfile
+from pathlib import Path
 
 import pyperclip
 
@@ -105,7 +105,7 @@ class TextUtils:
     @staticmethod
     def to_file(filename: str, text: str) -> None:
         """Write the given text to a file with the specified filename."""
-        with open(filename, "w") as f:
+        with Path(filename).open("w") as f:
             f.write(text)
 
 
@@ -138,7 +138,7 @@ def fix_indent(code_string: str) -> str | None:
         temp_file.write(code_string)
 
     try:
-        if not os.path.isfile(file_path):
+        if not Path(file_path).is_file():
             print(f"Error: {file_path} does not exist.")
             return None
 
@@ -165,7 +165,7 @@ def fix_indent(code_string: str) -> str | None:
         subprocess.run([sys.executable, "-m", "flake8", file_path])
 
         # Read the fixed code
-        with open(file_path) as file:
+        with Path(file_path).open() as file:
             fixed_code = file.read()
 
         # black format
@@ -175,5 +175,5 @@ def fix_indent(code_string: str) -> str | None:
         print(f"Error formatting code: {e}")
     finally:
         # Clean up the temporary file
-        if os.path.exists(file_path):
-            os.remove(file_path)
+        if Path(file_path).exists():
+            Path(file_path).unlink()

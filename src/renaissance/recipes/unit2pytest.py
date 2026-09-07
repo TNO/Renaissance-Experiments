@@ -1,6 +1,7 @@
 import os
 import textwrap
 from collections.abc import Sequence
+from pathlib import Path
 
 from renaissance.integrations.python.ast.util import convert_function
 from renaissance.integrations.types import Attribute, ClassDef, FormattedString, FunctionDef, Literal, Number
@@ -166,10 +167,7 @@ class Unit2Pytest(PythonRefactoring):
         for match in match_pattern(self.body, pattern):
             repl = 'assert_that($real, has_length($exp), f"length of $real = {len($real)}")'
             real = match["$real"]
-            if self.is_swapped(match):
-                exp = match["$exp"]
-            else:  # original is wrong
-                exp = match["$act"]
+            exp = match["$exp" if self.is_swapped(match) else "$act"]  # use "$act" when original is wrong
             repl = repl.replace("$exp", exp).replace("$real", real)
             self.replace(repl, match.nodes, False, False)
 
@@ -218,7 +216,8 @@ class Unit2Pytest(PythonRefactoring):
         self.commit()
 
     def convert_file_to_test_class(self):
-        stem = os.path.splitext(os.path.basename(self.filename))[0]
+        path = Path(self.filename)
+        stem = path.stem
         parts = stem.split("_")
         if parts[-1].lower() == "test":
             parts = parts[:-1]

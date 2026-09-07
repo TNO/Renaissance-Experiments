@@ -64,7 +64,7 @@ class Taut2Pyunit(PythonRefactoring):
 
         try:
             # result = insert_doc(result, "01-22-2026")
-            with open(self.get_migrated_path(self.filename), "w") as f:
+            with self.get_migrated_path(self.filename).open("w") as f:
                 f.write(self.apply_to_string())
         except FileNotFoundError:
             print(f"Error: File '{self.filename}' not found.")
@@ -74,13 +74,8 @@ class Taut2Pyunit(PythonRefactoring):
 
         Example: 'taut.py' -> 'taut_migrated.py'
         """
-        # Split the path into filename and extension
-        base, ext = os.path.splitext(file_path)
-
-        # Create the new path with '_migrated' added
-        new_path = f"{base}_migrated{ext}"
-
-        return new_path
+        path = Path(file_path)
+        return path.with_stem(f"{path.stem}_migrated")
 
     def replace_taut(self):
         """Replace TAUT.TestCase by unittest.TestCase."""
@@ -394,10 +389,9 @@ ImprovedStub.store_args = {}
     def replace_unittest_with_asserter(self):
         pattern = self.pattern_factory.create_statements("class $a(TAUT.TestCase):\n    $$bb")
         for match in match_pattern(self.root.children, pattern):
-            if not match["$a"] == "Asserter":
-                if "assert_raises" in match["$$bb"] or "assert_double_equal" in match["$$bb"]:
-                    repl = f"{match.signature.replace('TAUT.TestCase', 'Asserter')}"
-                    self.replace(repl, match.nodes, False, False)
+            if match["$a"] != "Asserter" and ("assert_raises" in match["$$bb"] or "assert_double_equal" in match["$$bb"]):
+                repl = f"{match.signature.replace('TAUT.TestCase', 'Asserter')}"
+                self.replace(repl, match.nodes, False, False)
         self.commit()
 
     def assert_func(self):
@@ -649,9 +643,8 @@ def get_change_comment(date=None):
     """
     change_id = "SWCHGxxxxxxxx"
     description = "Add assert_raises method to Asserter class."
-    if date is None:
-        # No date provided, use today
-        formatted_date = datetime.now()
-    else:
-        formatted_date = datetime.strptime(date, "%m-%d-%Y")
+
+    # When no date provided, use today
+    formatted_date = datetime.now() if date is None else datetime.strptime(date, "%m-%d-%Y")
+
     return f"# {formatted_date.strftime('%m-%d-%Y')} : {change_id} SBYN {description}"
