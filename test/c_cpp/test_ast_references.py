@@ -4,8 +4,8 @@ import pytest
 from hamcrest import assert_that, contains_exactly, contains_string, greater_than, has_length, is_, is_in
 from more_itertools.more import first
 
-from renaissance.impl.clang import ClangASTNode
-from renaissance.impl.types import *
+from renaissance.integrations.clang import ClangASTNode
+from renaissance.integrations.types import *
 from renaissance.syntax_tree import ASTNode, ASTShower
 from renaissance.syntax_tree.ast_finder import find_ast_type, matches_kind
 
@@ -147,10 +147,7 @@ class TestASTReference:
         assert_that(isinstance(ref_node.ast_type(), (RecordDef, ClassDef, StructDef)))
         referenced_by = ref_node.referenced_by
         assert_that(referenced_by, has_length(greater_than(0)))  # clang python return 2 references, clang json 1
-        if len(referenced_by[0].node.children):
-            name = referenced_by[0].node.children[0].name
-        else:
-            name = referenced_by[0].node.name
+        name = referenced_by[0].node.children[0].name if len(referenced_by[0].node.children) else referenced_by[0].node.name
         if isinstance(using, ClangASTNode):
             assert_that(name, is_in(using.name))
             for r in referenced_by:

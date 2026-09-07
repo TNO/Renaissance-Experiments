@@ -1,10 +1,8 @@
-from __future__ import annotations
-
 from collections.abc import Callable, Iterator, Sequence
 from pathlib import Path
 
 import renaissance.syntax_tree.match_finder
-from renaissance.impl.types import Type
+from renaissance.integrations.types import Type
 from renaissance.syntax_tree import ASTNode
 from renaissance.syntax_tree.ast_factory import ASTFactory
 from renaissance.syntax_tree.ast_finder import ASTFinder, find_ast_type
@@ -121,7 +119,7 @@ class ASTProcessor:
             atu = factory.create_from_text(rewriter.apply_to_string(), rewriter.get_filename())
             return atu, ASTRewriter(atu)
         # save file first then reload it
-        with open(rewriter.get_filename(), "wb") as f:
+        with Path(rewriter.get_filename()).open("wb") as f:
             f.write(rewriter.apply())
         atu = factory.create(Path(rewriter.get_filename()))
         return atu, ASTRewriter(atu)

@@ -84,6 +84,13 @@ taut2test = "rejuvenation.cli:refactor"
 testpaths = ["test", "features"]
 pythonpath = ["src", "test", "features"]
 norecursedirs = ["features/targets", "*.egg", ".*", "_darcs", "build", "CVS", "dist", "node_modules", "venv", "{arch}"]
+markers = [
+    "xfail_prepend_descendant_first: known-failing rewrite-semantics.feature Examples row (see features/steps/conftest.py)",
+    "xfail_append_ancestor_first: known-failing rewrite-semantics.feature Examples row (see features/steps/conftest.py)",
+    "xfail_sibling_range_dominance_range_first: known-failing rewrite-semantics.feature Examples row (see features/steps/conftest.py)",
+    "xfail_surround_descendant_first_shared_start: known-failing rewrite-semantics.feature Examples row (see features/steps/conftest.py)",
+    "xfail_surround_ancestor_first_shared_end: known-failing rewrite-semantics.feature Examples row (see features/steps/conftest.py)",
+]
 
 [tool.coverage.run]
 source = ["src"]
@@ -102,8 +109,8 @@ force-exclude = true
 [tool.ruff.lint]
 select = [
     "AIR", "ASYNC", "COM", "DJ", "E", "EXE", "FA", "FAST",
-    "FLY", "G", "I", "INT", "ISC", "LOG", "NPY", "PD", "PIE", "PYI", "Q",
-    "RSE", "SLOT", "T10", "UP", "W", "YTT",
+    "FLY", "G", "I", "INT", "ISC", "LOG", "NPY", "PTH", "PD", "PIE", "PYI",
+    "Q", "RSE", "SIM", "SLOT", "T10", "UP", "W", "YTT",
 ]
 #select = ["ALL"]  # goal of issue 
 ignore = [
@@ -126,5 +133,6 @@ extraPaths = ["src", "test", "features"]
 [tool.pymarkdown]
 plugins.md013.line_length = 140
 plugins.md013.tables = false
+plugins.md013.code_blocks = false
 extensions.markdown-tables.enabled = true
 

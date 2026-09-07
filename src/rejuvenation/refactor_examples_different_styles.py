@@ -1,7 +1,7 @@
 # This script demonstrates various techniques for refactoring C code using an abstract syntax tree (AST) approach.
 # It showcases how to add comments, replace types, and find specific nodes in the AST using different methods.
-from renaissance.impl.clang import ClangASTNode, CPatternFactory
-from renaissance.impl.types import TypeReference
+from renaissance.integrations.clang import ClangASTNode, CPatternFactory
+from renaissance.integrations.types import TypeReference
 from renaissance.syntax_tree import (
     ASTFactory,
     ASTFinder,
@@ -102,9 +102,7 @@ def example_replace_old_by_fancy_new(factory, pattern_factory):
 
     # an example of how to use a function iso of lambda to filter the nodes
     def matches_old(node):
-        if "$old" in node and node["$old"][0].name == "old":
-            return True
-        return False
+        return bool("$old" in node and node["$old"][0].name == "old")
 
     atu = factory.create_from_text(example_code, "test.c")
     rewriter = ASTRewriter(atu)
