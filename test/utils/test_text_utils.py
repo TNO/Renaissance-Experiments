@@ -9,6 +9,8 @@ class TestSnakeCase:
         "input_str, expected",
         [
             ("CamelCase", "camel_case"),
+            # TODO is this correct?
+            # Unit2 + Pytest should be considered 2 separate words
             ("Unit2Pytest", "unit2pytest"),
             ("SimplifyRenaissance", "simplify_renaissance"),
             ("PythonRefactoring", "python_refactoring"),

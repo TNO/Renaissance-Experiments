@@ -114,6 +114,8 @@ def signature2id(signature: str) -> str:
     return re.sub(r"[^\w\s]", "", text)[:30]  # Remove punctuation, limit length
 
 
+# TODO - camelCase is not being used anywhere other than its own tests
+# Do we need this for the future or is this dead code?
 def camel_case(snippet: str) -> str:
     parts = snippet.split("_")
     return parts[0] + "".join(word.capitalize() for word in parts[1:])
