@@ -1,13 +1,15 @@
 from collections.abc import Sequence
 from functools import cache
-
-from renaissance.integrations.clang.c_pattern_factory import CPPPatternFactory
+from typing import TYPE_CHECKING
 
 from ..integrations.types import BogusType, Type
 from .ast_finder import ASTFinder, matches_kind
 from .ast_node import ASTNode
 from .ast_processor import ASTProcessor
 from .match_finder import MatchFinder, PatternMatch
+
+if TYPE_CHECKING:
+    from renaissance.integrations.clang.c_pattern_factory import CPPPatternFactory
 
 
 class ASTRefactorActions:
