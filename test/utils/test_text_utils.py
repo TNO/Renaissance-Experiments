@@ -8,14 +8,17 @@ class TestSnakeCase:
     @pytest.mark.parametrize(
         "input_str, expected",
         [
-            ("CamelCase", "camel_case"),
-            ("Unit2Pytest", "unit2pytest"),
-            ("SimplifyRenaissance", "simplify_renaissance"),
-            ("PythonRefactoring", "python_refactoring"),
-            ("already_snake", "already_snake"),
             ("A", "a"),
+            ("already_snake", "already_snake"),
+            ("Base64Encode", "base64_encode"),
+            ("CamelCase", "camel_case"),
+            ("HTML5Parser", "html5_parser"),
             ("HTMLParser", "html_parser"),
-            ("TestSnakeCase", "testsnake_case"),  # TODO: Is this really the expected / desired behaviour?
+            ("Python3Refactoring", "python3_refactoring"),
+            ("PythonRefactoring", "python_refactoring"),
+            ("SimplifyRenaissance", "simplify_renaissance"),
+            ("TestSnakeCase", "test_snake_case"),
+            ("Unit2Pytest", "unit2_pytest"),
         ],
     )
     def test_snake_case(self, input_str, expected):
