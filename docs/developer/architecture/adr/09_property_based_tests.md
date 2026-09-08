@@ -65,8 +65,8 @@ def test_round_trip(node: LSTNode) -> None:
     assert unparse(parse(str(node))) == str(node)
 
 @given(st.text(alphabet=st.characters(whitelist_categories=("Lu", "Ll"))))
-def test_camel_case_no_spaces(name: str) -> None:
-    result = camel_case(name)
+def test_snake_case_no_spaces(name: str) -> None:
+    result = snake_case(name)
     assert " " not in result
 ```
 
