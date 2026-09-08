@@ -1,6 +1,6 @@
 from pytest_bdd import scenario, when
 
-from renaissance.recipes.unit2pytest import Unit2Pytest
+from renaissance.recipes.unit2_pytest import Unit2Pytest
 from steps.test_steps import *
 
 

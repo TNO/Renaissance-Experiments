@@ -11,7 +11,7 @@ import test_data.test_insert as tst_insert
 import test_data.test_testdoubles as tst_testdoubles
 from renaissance.integrations.python.ast.rst_node import PythonRstNode
 from renaissance.integrations.types import Name
-from renaissance.recipes.taut2pyunit import Taut2Pyunit
+from renaissance.recipes.taut2_pyunit import Taut2Pyunit
 from renaissance.utils.ast_utils import traverse
 
 

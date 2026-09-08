@@ -20,7 +20,7 @@ class TestPythonRefactoring:
 
     def test_init_sets_default_list_patterns(self, mocker):
         self._patch_factory(mocker)
-        from renaissance.recipes.unit2pytest import Unit2Pytest
+        from renaissance.recipes.unit2_pytest import Unit2Pytest
 
         subject = Unit2Pytest("test_foo.py")
         # base class defaults are overridden by subclass, but they are set in __init__
@@ -35,7 +35,7 @@ class TestPythonRefactoring:
             """,
             "test_foo.py",
         )
-        from renaissance.recipes.unit2pytest import Unit2Pytest
+        from renaissance.recipes.unit2_pytest import Unit2Pytest
 
         subject = Unit2Pytest("test_foo.py")
         subject.in_memory = True
@@ -51,7 +51,7 @@ class TestPythonRefactoring:
             """,
             "test_foo.py",
         )
-        from renaissance.recipes.unit2pytest import Unit2Pytest
+        from renaissance.recipes.unit2_pytest import Unit2Pytest
 
         subject = Unit2Pytest("test_foo.py")
         subject.in_memory = True
@@ -67,7 +67,7 @@ class TestPythonRefactoring:
 
     def test_process_skips_file_matching_black_list(self, mocker, capsys):
         self._patch_factory(mocker, "pass", "utils_for_test_foo.py")
-        run_spy = mocker.patch("renaissance.recipes.unit2pytest.Unit2Pytest.run")
+        run_spy = mocker.patch("renaissance.recipes.unit2_pytest.Unit2Pytest.run")
         PythonRefactoring.process("Unit2Pytest", "utils_for_test_foo.py")
         captured = capsys.readouterr()
         assert_that(captured.out, contains_string("skipping"))
@@ -75,7 +75,7 @@ class TestPythonRefactoring:
 
     def test_process_skips_file_not_matching_white_list(self, mocker, capsys):
         self._patch_factory(mocker, "pass", "my_module.py")
-        run_spy = mocker.patch("renaissance.recipes.unit2pytest.Unit2Pytest.run")
+        run_spy = mocker.patch("renaissance.recipes.unit2_pytest.Unit2Pytest.run")
         PythonRefactoring.process("Unit2Pytest", "my_module.py")
         captured = capsys.readouterr()
         assert_that(captured.out, contains_string("skipping"))
@@ -87,7 +87,7 @@ class TestPythonRefactoring:
 
     def test_process_runs_refactor_on_matching_file(self, mocker, capsys):
         self._patch_factory(mocker, "pass", "test_foo.py")
-        run_spy = mocker.patch("renaissance.recipes.unit2pytest.Unit2Pytest.run")
+        run_spy = mocker.patch("renaissance.recipes.unit2_pytest.Unit2Pytest.run")
         PythonRefactoring.process("Unit2Pytest", "test_foo.py")
         captured = capsys.readouterr()
         assert_that(captured.out, contains_string("refactor"))
@@ -106,7 +106,7 @@ class TestPythonRefactoring:
             """,
             "test_foo.py",
         )
-        from renaissance.recipes.unit2pytest import Unit2Pytest
+        from renaissance.recipes.unit2_pytest import Unit2Pytest
 
         subject = Unit2Pytest("test_foo.py")
         assert_that(len(subject.body), is_(2))

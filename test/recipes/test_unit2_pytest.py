@@ -5,7 +5,7 @@ from hamcrest import assert_that, contains_string, ends_with, is_, not_
 
 import targets
 from renaissance.integrations.python.ast.rst_node import PythonRstNode
-from renaissance.recipes.unit2pytest import Unit2Pytest
+from renaissance.recipes.unit2_pytest import Unit2Pytest
 
 
 class TestUnit2Pytest:
