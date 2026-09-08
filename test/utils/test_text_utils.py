@@ -1,7 +1,7 @@
 import pytest
 from hamcrest import assert_that, is_
 
-from renaissance.utils.text_utils import camel_case, snake_case
+from renaissance.utils.text_utils import snake_case
 
 
 class TestSnakeCase:
@@ -20,19 +20,3 @@ class TestSnakeCase:
     )
     def test_snake_case(self, input_str, expected):
         assert_that(snake_case(input_str), is_(expected))
-
-
-class TestCamelCase:
-    @pytest.mark.parametrize(
-        "input_str, expected",
-        [
-            ("camel_case", "camelCase"),
-            ("simplify_renaissance", "simplifyRenaissance"),
-            ("python_refactoring", "pythonRefactoring"),
-            ("already_snake", "alreadySnake"),
-            ("a", "a"),
-            ("html_parser", "htmlParser"),
-        ],
-    )
-    def test_camel_case(self, input_str, expected):
-        assert_that(camel_case(input_str), is_(expected))

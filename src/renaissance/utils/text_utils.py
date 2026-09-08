@@ -114,11 +114,6 @@ def signature2id(signature: str) -> str:
     return re.sub(r"[^\w\s]", "", text)[:30]  # Remove punctuation, limit length
 
 
-def camel_case(snippet: str) -> str:
-    parts = snippet.split("_")
-    return parts[0] + "".join(word.capitalize() for word in parts[1:])
-
-
 def snake_case(snippet: str) -> str:
     # TODO: Why is exactly one non-capital character allowed in the second group?
     # Is the regex correct? Should it be [A-Z][a-z]* or [A-Z][a-z]+ instead of [A-Z][a-z]?
