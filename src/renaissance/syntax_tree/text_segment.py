@@ -11,7 +11,16 @@ class TextSegment(Protocol):
     Instances include comments, whitespace (incl. empty lines), and syntax nodes.
 
     Read-only access is enforced "as much as possible" by
-    exposing only @property getters in the protocol
+    exposing only @property getters in the protocol.
+
+    A concrete implementation of this protocol can make some of the properties lazy by using
+    functools.cached_property or manual memoized attributes,
+    such that it only triggers computation the first time it's needed.
+    For example, start_line and start_column can be computed from start_offset and full_text,
+    but only when they are first accessed.
+    Furthermore, a concrete implementation can also make a line-start-offset table once per document
+    and reuse it for every node in that document,
+    turning each node's line/column lookup into an O(log lines) binary search.
     """
 
     @property
