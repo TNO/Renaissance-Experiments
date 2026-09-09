@@ -7,7 +7,7 @@ from renaissance.syntax_tree.ast_finder import find_ast_type
 
 
 class ClangMatchFinderTest:
-    def testIsMatch(self):
+    def test_is_match(self):
         code = """
         #define BAR "bar"
         void g(int,int);

@@ -39,12 +39,12 @@ def init_language_factory(context):
 
 
 @given(parsers.parse("'{file}' file written in that programming language"))
-def step_impl(context, file):
+def step_given_file_in_language(context, file):
     context["atu"] = context["factory"].create(FEATURES_BASE_DIR / Path(file))
 
 
 @given(parsers.parse("node '{old}' exits within that AST"))
-def step_impl(context, old):
+def step_given_node_exists(context, old):
     pattern_factory = PythonPatternFactory(context["factory"])
     find = pattern_factory.create_statements(old)
     context["result"] = match_pattern(context["atu"].children, find)
@@ -52,27 +52,27 @@ def step_impl(context, old):
 
 
 @given("a sequence of descendant nodes of that node")
-def step_impl(context):
+def step_given_descendant_nodes(context):
     assert context["result"][0].nodes[0].children
 
 
 @when(parsers.parse("that node is replaced by '{replacement}'"))
-def step_impl(context, replacement):
+def step_when_node_replaced(context, replacement):
     context["replacement"] = replacement
     context["rewriter"] = ASTRewriter(context["atu"])
     context["rewriter"].replace(replacement, context["result"][0].nodes)
 
 
 @when("rewrites replace is performed on that sequence of descendant nodes")
-def step_impl(context):
+def step_when_rewrites_applied(context):
     context["rewriter"].apply()
 
 
 @then("in the modified source file that node is replaced by the given text")
-def step_impl(context):
+def step_then_replaced_in_source(context):
     assert context["replacement"] in context["rewriter"].apply_to_string()
 
 
 @then("all rewrites on that sequence of descendant nodes are not performed or hidden")
-def step_impl(context):
+def step_then_rewrites_not_performed_or_hidden(context):
     assert context["rewriter"].has_changed()

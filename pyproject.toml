@@ -102,12 +102,16 @@ skip_covered = false
 [tool.ruff]
 line-length = 140
 src = ["src", "test", "features"]
-extend-exclude = ["features/targets/invalid.py"]
+extend-exclude = [
+    "features/targets/invalid.py",
+    "features/targets/taut/taut_test.py",  # legacy fixture source, not real code
+    "features/targets/go/node.py",  # legacy fixture source, not real code
+]
 force-exclude = true
 
 [tool.ruff.lint]
 select = [
-    "AIR", "ASYNC", "COM", "DJ", "E", "EXE", "FA", "FAST",
+    "AIR", "ASYNC", "COM", "DJ", "E", "EXE", "F", "FA", "FAST",
     "FLY", "G", "I", "INT", "ISC", "LOG", "NPY", "PTH", "PD", "PIE", "PYI",
     "Q", "RSE", "SIM", "SLOT", "T10", "UP", "W", "YTT",
 ]
@@ -117,9 +121,6 @@ ignore = [
     "D213",  # conflicts with D212 (summary on the first line) — keep D212
     "COM812", # conflicts when used with the formatter - use formatter
 ]
-
-[tool.ruff.lint.per-file-ignores]
-"**/conftest.py" = ["F401"]
 
 [tool.pyright]
 pythonVersion = "3.14"

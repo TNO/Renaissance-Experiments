@@ -1,7 +1,7 @@
 from pytest_bdd import scenario, when
 
 from renaissance.recipes.unit_to_pytest import UnitToPytest
-from steps.test_steps import *
+from steps.test_steps import *  # noqa: F403 -- pytest-bdd step aggregation
 
 
 @scenario("convert-unit-to-pytest.feature", "convert unittest to pytest", "utf-8", "..")

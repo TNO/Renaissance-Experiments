@@ -22,9 +22,9 @@ def annotate_decorator(foreign_decorator: TFunc, name: str):
 
 
 def get_methods_with_decorator(cls: Any, decorator: TFunc):
-    for maybeDecorated in cls.__dict__.values():
-        if hasattr(maybeDecorated, "recipe_action") and maybeDecorated.recipe_action == decorator.__name__:
-            yield maybeDecorated
+    for maybe_decorated in cls.__dict__.values():
+        if hasattr(maybe_decorated, "recipe_action") and maybe_decorated.recipe_action == decorator.__name__:
+            yield maybe_decorated
 
 
 # Decorators
