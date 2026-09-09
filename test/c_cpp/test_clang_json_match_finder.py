@@ -11,7 +11,7 @@ from renaissance.syntax_tree.ast_finder import find_ast_type
 
 class TestClangJsonMatchFinder:
     @pytest.mark.skip
-    def testIsMatchUsingMacroFromAtu(self):
+    def test_is_match_using_macro_from_atu(self):
         code = """
         #define BAR "bar"
         void f(){
