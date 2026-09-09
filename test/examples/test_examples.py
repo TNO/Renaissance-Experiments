@@ -157,16 +157,16 @@ class TestExamplesDifferentStyles:
         assert_that(calling(lambda: example_add_comment_and_commit(factory, pattern_factory)), not_(raises(Exception)))
 
         result, expected = example_replace_old_by_fancy_new(factory, pattern_factory)
-        # shiould check this:
+        # should check this:
         # assert_that(result, contains_string("fancy_new b = 2;\n"))
 
-    def test_make_sure_that_batch_proc_still_run(self):
+    def test_make_sure_that_batch_remove_proc_still_run(self):
         assert_that(calling(batch_remove_unused_variable_once_example), not_(raises(Exception)))
 
-    def test_make_sure_that_batch_proc_still_run(self):
+    def test_make_sure_that_batch_repeat_proc_still_run(self):
         assert_that(calling(batch_repeat_example), not_(raises(Exception)))
 
-    def test_make_sure_that_batch_proc_still_run(self):
+    def test_make_sure_that_batch_recipe_proc_still_run(self):
         assert_that(calling(batch_recipe_example), not_(raises(Exception)))
 
     def test_make_sure_that_recipe_still_run(self):

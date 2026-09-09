@@ -15,7 +15,12 @@ from libcst import ParserSyntaxError
 import targets
 from renaissance.integrations.python.ast.cst_node import PythonCstNode
 from renaissance.integrations.python.ast.factory import PythonFactory, PythonPatternFactory
-from renaissance.integrations.types import *
+from renaissance.integrations.types import (
+    ListComp,
+    Name,
+    SubscriptElement,
+    Whitespace,
+)
 from renaissance.syntax_tree import ASTShower
 
 

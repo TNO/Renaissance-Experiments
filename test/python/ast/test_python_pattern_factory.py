@@ -4,7 +4,30 @@ from hamcrest import assert_that, has_length, instance_of, is_, is_in
 from python.ast.factories import Factories
 from renaissance.integrations.python.ast.factory import PythonFactory, PythonPatternFactory
 from renaissance.integrations.python.ast.rst_node import PythonRstNode
-from renaissance.integrations.types import *
+from renaissance.integrations.types import (
+    Assert,
+    Assign,
+    Break,
+    Call,
+    ClassDef,
+    Continue,
+    Del,
+    ExpressionStatement,
+    For,
+    FunctionDef,
+    If,
+    ImplicitNode,
+    ImportFrom,
+    Literal,
+    MatchAll,
+    MatchOne,
+    Number,
+    Pass,
+    Return,
+    Try,
+    While,
+    With,
+)
 from renaissance.syntax_tree.match_finder import match_pattern
 
 

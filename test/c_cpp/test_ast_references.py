@@ -5,7 +5,19 @@ from hamcrest import assert_that, contains_exactly, contains_string, greater_tha
 from more_itertools.more import first
 
 from renaissance.integrations.clang import ClangASTNode
-from renaissance.integrations.types import *
+from renaissance.integrations.types import (
+    Call,
+    ClassDef,
+    ConstructorExpression,
+    DeclarationExpression,
+    FunctionDef,
+    ParameterDef,
+    RecordDef,
+    StructDef,
+    TypedefDef,
+    TypeReference,
+    VariableDef,
+)
 from renaissance.syntax_tree import ASTNode, ASTShower
 from renaissance.syntax_tree.ast_finder import find_ast_type, matches_kind
 

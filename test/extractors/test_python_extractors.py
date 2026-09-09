@@ -8,22 +8,19 @@ from renaissance.integrations.python.ast.extractor import PythonExtractor
 
 class TestPythonExtractor:
     def test_extractor(self):
-
         extractor = PythonExtractor()
-
         assert_that(extractor, is_not(None))
 
-    def test_extract_a_file(self):
-
+    def test_extract_python_file(self):
         extractor = PythonExtractor()
-        extractor.process_file(Path(targets.__file__).parent / "demo.py")
+        extractor.process(Path(targets.__file__).parent / "demo.py")
 
         assert_that(extractor.codebase, is_not(empty()))
-        assert_that(extractor.nodes, is_not(empty()))
-        assert_that(extractor.edges, is_not(empty()))
+        assert_that(extractor.graph, is_not(None))
+        assert_that(extractor.graph.nodes, is_not(empty()))
+        assert_that(extractor.graph.edges, is_not(empty()))
 
-    def test_extract_a_file(self):
-
+    def test_extract_python_file_and_save_graphml(self):
         extractor = PythonExtractor()
         extractor.process(Path(targets.__file__).parent / "demo.py")
         graphml = Path(targets.__file__).parent / "demo.graphml"

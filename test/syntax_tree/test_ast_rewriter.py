@@ -1186,11 +1186,11 @@ class TestSyntaxAwareAdjacentComposition:
     """
 
     def setup(self, factory: ASTFactory):
-        code: str = "void f(int i, int j) { i++;j++; }"
-        pattern: str = " $stmt1; $stmt2; "
+        code_text: str = "void f(int i, int j) { i++;j++; }"
+        pattern_text: str = " $stmt1; $stmt2; "
 
-        atu = factory.create_from_text(code, "test.c")
-        pattern = CPatternFactory(factory).create_statements(PATTERN)
+        atu = factory.create_from_text(code_text, "test.c")
+        pattern = CPatternFactory(factory).create_statements(pattern_text)
         matches = list(find_all([atu], [pattern]))
 
         assert matches, "A match expected"
