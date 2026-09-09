@@ -82,10 +82,25 @@ Then     | an error with the text "overlapping changes are forbidden" is produce
    * Append of node always after surround of descendant of that node
 1. on unrelated nodes: No interaction possible, so nothing to specify
 
+## Scenario: Combination of insertions and replacement on the same node
+
+See
+[prepend, surround, append, and replace](../concepts/rewrite-semantics.md#particular-combinations)
+in the concept page for the formal rule: wherever the node's own text would appear in the
+combined-insertions order, the replacement text appears instead when the node is also replaced.
+
+1. prepend and replace: the prepend text always precedes the replacement text.
+1. replace and append: the replacement text always precedes the append text.
+1. surround and replace: the surround's before-text always precedes, and its after-text always
+   follows, the replacement text.
+
+Each of the three combinations holds regardless of collection order.
+
 ## Scenario: Combination of multiple prepends
 
-1. on the same node: In the order of prepending.
-Final order in modified source file: Prepend N - ... -  Prepend 2 - Prepend 1 - AST Node
+1. on the same node: see
+   [multiple prepends at the same text location](../concepts/rewrite-semantics.md#particular-combinations)
+   in the concept page for the ordering rule and example.
 1. on a node and a descendant of that node:
    See the concept page for an illustration of
    [prepends at the same text location](../concepts/rewrite-semantics.md#rewrite-semantics-prepends).
@@ -105,8 +120,9 @@ Final order in modified source file: Prepend N - ... -  Prepend 2 - Prepend 1 - 
 
 ## Scenario: Combination of multiple appends
 
-1. on the same node: In the order of appending.
-   Final order in modified source file: AST Node - Append 1 - Append 2 - ... - Append N
+1. on the same node: see
+   [multiple appends at the same text location](../concepts/rewrite-semantics.md#particular-combinations)
+   in the concept page for the ordering rule and example.
 1. on a node and a descendant of that node
 
    BDD keyword | step description
@@ -127,15 +143,23 @@ Final order in modified source file: Prepend N - ... -  Prepend 2 - Prepend 1 - 
 
 Surround has before- and after-text.
 
-1. on the same node: The order reflects the order of calling surround.
-   Final order in modified source file:
-   Surround Before N - ... - Surround Before 2 - Surround Before 1 - AST Node - Surround After 1 - Surround After 2 - ... - Surround After N
-1. on a node and a descendant of that node:
+1. on the same node: see
+   [multiple surrounds at the same text location](../concepts/rewrite-semantics.md#particular-combinations)
+   in the concept page.
+1. on a node and a descendant of that node: see the concept page rule linked above for the general
+   rule; the table below gives the testable scenario.
 
-   * Before-text of surround of node always before before-text (and after-text)
-      of surround of descendant of that node
-   * After-text of surround of node always after (before-text and) after-text
-      of surround of descendant of that node
+   BDD keyword | step description
+   -- | --
+   Given     | a programming language
+   and    | a source file written in that programming language
+   and    | an AST extracted from that source file without errors
+   and    | a node of that AST
+   and    | a descendant of that node
+   When     | that node is surrounded with a before-text and an after-text
+   and    | that descendant is surrounded with a before-text and an after-text
+   Then     | in the modified source file the node's before-text occurs before the descendant's before-text
+   and      | the descendant's after-text occurs before the node's after-text
 1. on unrelated nodes: No interaction possible, so nothing to specify
 
 For example, given the addition `a + b` and two changes
@@ -150,10 +174,14 @@ Note that
 
 The expected output is `exp(abs(a) + b)` and NOT `abs(exp(a) + b)`.
 
-## Scenario: Combination of append and prepend on consecutive nodes
+## Scenario: Combination of insertions at a shared sibling boundary
 
-See the concept page for an illustration of
-   [append and prepend at the same text location](../concepts/rewrite-semantics.md#rewrite-semantics-append-prepend).
+See the concept page for the general rule and an illustration of
+   [insertions at a shared sibling boundary](../concepts/rewrite-semantics.md#rewrite-semantics-append-prepend):
+   any text inserted at the end of a sibling (append text, or a surround's after-text) always precedes
+   any text inserted at the start of the next, consecutive sibling (prepend text, or a surround's before-text),
+   for all four combinations of the two operators — append/prepend, append/surround, surround/prepend,
+   and surround/surround — and regardless of collection order.
 
 BDD keyword | step description
 -- | --
@@ -162,8 +190,8 @@ and    | a source file written in that programming language
 and    | a string not contained in that source file
 and    | an AST extracted from that source file without errors
 and    | two consecutive nodes of that AST
-When     | the first node is append by a concatenation of that string with "node"
-and    | the second node is prepended by a concatenation of that string with "descendant"
+When     | the first node is appended (or surrounded, using its after-text) with a concatenation of that string with "node"
+and    | the second node is prepended (or surrounded, using its before-text) with a concatenation of that string with "descendant"
 Then     | in the modified source file the concatenation of that string with "node" occurs before the concatenation of that string with "descendant"
 
 ## Example
