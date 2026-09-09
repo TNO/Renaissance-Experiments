@@ -109,7 +109,7 @@ class TextUtils:
             f.write(text)
 
 
-def signature2id(signature: str) -> str:
+def signature_to_id(signature: str) -> str:
     text = signature.replace("\n", " ")
     return re.sub(r"[^\w\s]", "", text)[:30]  # Remove punctuation, limit length
 

@@ -11,15 +11,15 @@ class TestSimplifyRenaissance:
         code = textwrap.dedent(text)
         mocker.patch(
             "renaissance.integrations.python.ast.factory.PythonFactory.create",
-            return_value=PythonRstNode.load_from_text(code, "unit2pytest.py"),
+            return_value=PythonRstNode.load_from_text(code, "unit_to_pytest.py"),
         )
-        subject = SimplifyRenaissance("unit2pytest.py")
+        subject = SimplifyRenaissance("unit_to_pytest.py")
         subject.in_memory = True
         return subject
 
     def test_init_sets_white_and_black_list(self, mocker):
         subject = self._create(mocker, "pass")
-        assert_that(subject.white_list_pattern, is_("unit2pytest"))
+        assert_that(subject.white_list_pattern, is_("unit_to_pytest"))
         assert_that(subject.black_list_pattern, is_("SimplifyRenaissance"))
 
     def test_run_skips_file_matching_black_list(self, mocker, capsys):

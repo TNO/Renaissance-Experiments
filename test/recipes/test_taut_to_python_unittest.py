@@ -11,22 +11,22 @@ import test_data.test_insert as tst_insert
 import test_data.test_testdoubles as tst_testdoubles
 from renaissance.integrations.python.ast.rst_node import PythonRstNode
 from renaissance.integrations.types import Name
-from renaissance.recipes.taut2_pyunit import Taut2Pyunit
+from renaissance.recipes.taut_to_python_unittest import TautToPythonUnittest
 from renaissance.utils.ast_utils import traverse
 
 
-class TestTaut2Unittest:
+class TestTautToPythonUnittest:
     def test_init(self):
-        subject = Taut2Pyunit(Path(targets.__file__).parent / "taut/taut_test.py")
+        subject = TautToPythonUnittest(Path(targets.__file__).parent / "taut/taut_test.py")
         assert_that(subject.filename, ends_with("taut_test.py"))
 
-    def _create(self, mocker, text) -> Taut2Pyunit:
+    def _create(self, mocker, text) -> TautToPythonUnittest:
         code = textwrap.dedent(text)
         mocker.patch(
             "renaissance.integrations.python.ast.factory.PythonFactory.create",
             return_value=PythonRstNode.load_from_text(code),
         )
-        subject = Taut2Pyunit("x.py")
+        subject = TautToPythonUnittest("x.py")
         subject.in_memory = True
         return subject
 

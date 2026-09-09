@@ -11,7 +11,7 @@ from renaissance.syntax_tree.ast_finder import find_ast_type
 from renaissance.syntax_tree.match_finder import AstProtocol, match_pattern
 
 
-class Unit2Pytest(PythonRefactoring):
+class UnitToPytest(PythonRefactoring):
     def __init__(self, file):
         """Hide internal administration in the parent class so that this class you only deals with specific refactors."""
         super().__init__(file)

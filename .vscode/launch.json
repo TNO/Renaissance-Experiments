@@ -6,11 +6,11 @@
     "configurations": [
 
         {
-            "name": "Run & Debug Taut2Pyunit",
+            "name": "Run & Debug TautToPythonUnittest",
             "type": "debugpy",
             "request": "launch",
             "module": "rejuvenation.cli",
-            "args": ["refactor", "Taut2Pyunit", "features/targets/taut/taut_test.py"],
+            "args": ["refactor", "TautToPythonUnittest", "features/targets/taut/taut_test.py"],
             "env": {
                 "PYTHONPATH": "src:test"
             },

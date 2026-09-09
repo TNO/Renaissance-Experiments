@@ -18,7 +18,6 @@ class TestSnakeCase:
             ("PythonRefactoring", "python_refactoring"),
             ("SimplifyRenaissance", "simplify_renaissance"),
             ("TestSnakeCase", "test_snake_case"),
-            ("Unit2Pytest", "unit2_pytest"),
         ],
     )
     def test_snake_case(self, input_str, expected):

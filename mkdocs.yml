@@ -171,6 +171,7 @@ nav:
               - 12. Patterns are not nodes: developer/architecture/adr/12_patterns_as_not_nodes.md
               - 13. Match pattern: developer/architecture/adr/13_match_pattern.md
               - 14. Code repository structure: developer/architecture/adr/14_code_repositories.md
+              - 15. camelCase/snake_case conversion and digit-as-word naming: developer/architecture/adr/15_camel_snake_case_conversion.md
 
       - Traceability:
           - Overview: developer/feature-test-map/index.md
