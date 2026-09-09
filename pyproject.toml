@@ -117,13 +117,12 @@ select = [
     "Q", "RSE", "SIM", "SLOT", "T10", "UP", "W", "YTT",
 ]
 #select = ["ALL"]  # goal of issue 
+
 ignore = [
     "D203",  # conflicts with D211 (no blank line before class) — keep D211
     "D213",  # conflicts with D212 (summary on the first line) — keep D212
     "COM812", # conflicts when used with the formatter - use formatter
 ]
-# Import order here breaks a circular import with renaissance.impl.clang if alphabetized.
-"src/renaissance/syntax_tree/__init__.py" = ["I001"]
 
 [tool.pyright]
 pythonVersion = "3.14"
