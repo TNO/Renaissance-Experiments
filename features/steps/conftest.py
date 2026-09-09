@@ -2,7 +2,7 @@ from pathlib import Path
 
 import pytest
 
-from features.steps.test_steps import *
+from features.steps.test_steps import *  # noqa: F403 -- pytest-bdd step aggregation
 
 FEATURES_BASE_DIR = Path(__file__).resolve().parent.parent
 

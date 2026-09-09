@@ -1,4 +1,3 @@
-import os
 import textwrap
 from collections.abc import Sequence
 from pathlib import Path

@@ -1,5 +1,5 @@
 import json
-from os import path, system
+from os import system
 from pathlib import Path
 
 
