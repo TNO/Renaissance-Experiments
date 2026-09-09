@@ -73,7 +73,8 @@ within the range of a change associated with one of its ancestors.
 *Figure 1.4 (CONCEPT-REWRITE-SEMANTICS-PREPENDS): Example of prepends of different AST nodes at the same textual location.*
 ///
    * same node:
-     In order of insertion of change / in collection order
+     In order of insertion of change / in collection order.  
+     Example: Prepend N - ... - Prepend 2 - Prepend 1 - AST Node text
 
 1. Multiple appends at the same text location
    * different nodes:
@@ -83,25 +84,53 @@ within the range of a change associated with one of its ancestors.
 *Figure 1.5 (CONCEPT-REWRITE-SEMANTICS-APPENDS): Example of appends of different AST nodes at the same textual location.*
 ///
    * same node:
-     In reverse order of insertion of change / in reversed collection order
+     In reverse order of insertion of change / in reversed collection order.  
+     Example: AST Node text - Append 1 - Append 2 - ... - Append N
 
-1. Appends and prepends at the same text location  
-Can only happen for consecutive sibling nodes:
-append of sibling before prepend of next, consecutive sibling  
+1. Multiple surrounds at the same text location  
+   * a node and one of its ancestors (the only way two different AST nodes can share the same
+     start and/or end location, since the descendant's range is always nested within the
+     ancestor's range):
+     the before-text of the ancestor's surround always precedes the before-text of the
+     descendant's surround, and the after-text of the descendant's surround always precedes
+     the after-text of the ancestor's surround — like nested brackets, where the outer bracket
+     opens first and closes last.
+   * same node:
+     Before-text in order of insertion of change / in collection order;
+     after-text in reverse order of insertion of change / in reversed collection order.  
+     Example: Surround Before N - ... - Surround Before 2 - Surround Before 1 - AST Node text - Surround After 1 - Surround After 2 - ... - Surround After N
+
+The direction depends on the operator: multiple prepends (and surround before-texts) follow the
+order of insertion into the collection of changes, while multiple appends (and surround
+after-texts) follow the reversed order of insertion.
+
+1. Insertions at a shared sibling boundary  
+Can only happen for consecutive sibling nodes: any text inserted at the end location of a sibling
+(append text, or the after-text of a surround) always precedes any text inserted at the start location
+of the next, consecutive sibling (prepend text, or the before-text of a surround).
+Figure 1.6 illustrates the append/prepend case; the same ordering applies when either or both
+operators are a surround instead.  
 /// html | figure#rewrite-semantics-append-prepend
 ![Append and prepend at the same textual location](rewrite-semantics-images/rewrite-semantics-append-prepend.png)
 *Figure 1.6 (CONCEPT-REWRITE-SEMANTICS-APPEND-PREPEND):
 Example of append and prepend of adjacent siblings at the same textual location.*
 ///
 
-1. Prepend, surround, and append
+1. Prepend, surround, append, and replace
    * same node  
      The expected order in the modified source file is:  
-     prepend_text, surround_before_text, AST Node text, surround_after_text, append_text
+     prepend_text, surround_before_text, (AST Node text | replacement text), surround_after_text, append_text  
+     where `(AST Node text | replacement text)` means exactly one of the two is present: the
+     node's own text when it is not replaced, or the replacement text when a
+     [replacement](../../glossary.md#replacement) is also applied to that node — never both.  
+     When there are multiple prepends, surrounds, and/or appends on the same node, each group
+     of insertions follows its own ordering rule given above, and the groups combine in the
+     same relative positions, e.g., for N prepends, M surrounds, and P appends:  
+     Prepend N - ... - Prepend 1 - Surround Before M - ... - Surround Before 1 - (AST Node text | replacement text) - Surround After 1 - ... - Surround After M - Append 1 - ... - Append P
 
-## MISC
+## Summary
 
-Rewrite-semantics
+Summary of the rewrite-semantics
 
 * Dominance rule: dominated operations are ignored
 * Consistency rule: overlapping operations are not possible
@@ -110,5 +139,8 @@ Rewrite-semantics
   i.e., they are ignored - prepend, append and around operations on that AST node are NOT affected.
   * A prepend to an AST node is always before a prepend to any contained AST node
   * An append to an AST node is always after an append to any contained AST node
+  * The before-text of a surround of an AST node is always before the before-text of a surround to any contained AST node
+  * The after-text of a surround of an AST node is always after the after-text of a surround to any contained AST node
 * Sequence rule - Given two consecutive AST Nodes (a.k.a. siblings):
-  * An append to the first AST Node is always before a prepend to the second AST Node
+  * Any text inserted at the end of the first AST Node (append text, or a surround's after-text) is
+  always before any text inserted at the start of the second AST Node (prepend text, or a surround's before-text)

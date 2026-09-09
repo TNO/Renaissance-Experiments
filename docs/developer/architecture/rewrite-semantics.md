@@ -79,9 +79,10 @@ Options include
 
 We have chosen
 
-1. When different AST-nodes are involved to order based on AST structure, e.g., for prepends and appends of different AST nodes
-1. When the same AST-node is involved to order based on the (reversed) order of insertion into the collection of changes.
-The direction depends on the operator - multiple prepends in the order and multiple appends in the reversed order of insertion.
+1. When different AST-nodes are involved to order based on AST structure, e.g., for prepends, appends, and surrounds of different AST nodes
+1. When the same AST-node is involved to order based on the (reversed) order of insertion into the collection of changes -
+see [Particular combinations](../../user/concepts/rewrite-semantics.md#particular-combinations) in the concept page for how the
+direction depends on the operator (prepends/surround-before-texts vs. appends/surround-after-texts) and for concrete examples.
 
 ## TO BE Removed?
 
