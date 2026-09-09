@@ -135,8 +135,8 @@ class TestExpression:
         ),
     )
     def test(self, _, factory, expression, expected):
-        patternFactory = CPatternFactory(factory)
-        node = patternFactory.create_expression(expression)
+        pattern_factory = CPatternFactory(factory)
+        node = pattern_factory.create_expression(expression)
         text = ASTShower.get_node(node)
         if isinstance(node, ClangASTNode):
             assert_that(text, is_(expected))
