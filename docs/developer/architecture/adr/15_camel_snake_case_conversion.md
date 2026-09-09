@@ -56,7 +56,7 @@ review thread, to spell `Pyunit` out fully as well (`TautToPythonUnittest`).
 
 ## Example
 
-```
+```bash
 uv run --with camel-converter python -c "
 from camel_converter import to_snake
 for s in ['HTMLParser', 'HTML5Parser', 'Base64Encode']:
