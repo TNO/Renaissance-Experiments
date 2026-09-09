@@ -14,7 +14,7 @@ Authors:
 `renaissance.utils.text_utils` provides `snake_case()`, used by `PythonRefactoring.process()` to
 resolve a recipe class name to its module path via `importlib`. A sibling `camel_case()` helper had
 no caller besides its own tests. Issue #146 asked whether `camel_case()` should be removed, and
-whether `snake_case()` should split a word on a digit (`Unit2Pytest` → `unit2pytest`) or keep the
+whether `snake_case()` should split a word on a digit (`Unit2Pytest` -> `unit2pytest`) or keep the
 digit attached (`unit2_pytest`).
 
 A well-supported library ([`camel-converter`](https://pypi.org/project/camel-converter/)) was
@@ -33,20 +33,23 @@ review thread, to spell `Pyunit` out fully as well (`TautToPythonUnittest`).
 - Keep `snake_case()` over `camel-converter` — the library incorrectly splits multi-letter acronyms
   (see Example).
 - **Rule A** (`snake_case()` itself): a digit stays attached to its word, never splits on its own —
-  `Base64Encode` → `base64_encode`, `HTML5Parser` → `html5_parser`. Unchanged from PR #147.
+  `Base64Encode` -> `base64_encode`, `HTML5Parser` -> `html5_parser`. Unchanged from PR #147.
+- `snake_case()` is also robust on input that is already snake_case — it leaves it unchanged
+  (`already_snake` -> `already_snake`), so it is safe to call on a name without checking its casing
+  first.
 - **Naming guideline** (for names contributors choose, e.g. recipe/class/function names): avoid
   using a digit as a stand-in for a word (no `2` for "to"). Spell it out. Applied to every current
   offender:
-  - `Taut2Pyunit` → `TautToPythonUnittest` (`taut_to_python_unittest.py`)
-  - `Unit2Pytest` → `UnitToPytest` (`unit_to_pytest.py`)
-  - `signature2id` → `signature_to_id`
+  - `Taut2Pyunit` -> `TautToPythonUnittest` (`taut_to_python_unittest.py`)
+  - `Unit2Pytest` -> `UnitToPytest` (`unit_to_pytest.py`)
+  - `signature2id` -> `signature_to_id`
 
 ## Implementation notes
 
 - `src/renaissance/utils/text_utils.py`: `snake_case()` (Rule A), `camel_case()` removed.
 - `src/renaissance/recipes/python_refactoring.py:39`: `PythonRefactoring.process()` resolves
-  `class_name` → `renaissance.recipes.<snake_case(class_name)>`; names following the guideline
-  above resolve correctly by construction (`snake_case("TautToPythonUnittest")` →
+  `class_name` -> `renaissance.recipes.<snake_case(class_name)>`; names following the guideline
+  above resolve correctly by construction (`snake_case("TautToPythonUnittest")` ->
   `taut_to_python_unittest`).
 - Renamed to follow the guideline, with their tests and feature steps: the two recipes above, and
   `signature2id()`'s one caller (`integrations/tree_sitter/visualizer.py`).
@@ -107,5 +110,5 @@ Negative:
 Revision history:
 
 - 2026-09-09: Created from issue #146 / PR #147 discussion.
-- 2026-09-09: `TautToPyunit` → `TautToPythonUnittest`, following Pierre's approval on the PR #147
+- 2026-09-09: `TautToPyunit` -> `TautToPythonUnittest`, following Pierre's approval on the PR #147
   review thread.
