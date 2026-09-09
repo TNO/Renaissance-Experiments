@@ -42,6 +42,23 @@ class TestClangAstNode:
         src = ClangASTNode.load_from_text("   int    x   =    0   ;", "test.c")
         assert_that(src.children[-1].signature, is_("   int    x   =    0   ;"))
 
+    @pytest.mark.skip(
+        "Known bug (see issue): load_from_text() caches file content encoded with "
+        "sys.getfilesystemencoding(), but libclang always parses/offsets unsaved_files "
+        "content as UTF-8 internally. When the filesystem encoding is not UTF-8, a "
+        "multi-byte UTF-8 character earlier in the file shifts every subsequent byte "
+        "offset, so slicing the (differently-sized) cached byte array with clang's "
+        "offsets returns corrupted text.",
+    )
+    def test_signature_after_multibyte_char_when_filesystem_encoding_is_not_utf8(self, mocker):
+        # 'é' encodes as 1 byte in latin-1 but 2 bytes in UTF-8. libclang parses/reports
+        # offsets against a UTF-8 encoding of the source regardless of the platform's
+        # filesystem encoding, so the two byte arrays diverge in length from this point on.
+        mocker.patch("sys.getfilesystemencoding", return_value="latin-1")
+        code = "// café\nint x = 0;\n"
+        src = ClangASTNode.load_from_text(code, "test.c")
+        assert_that(src.children[-1].signature, is_("int x = 0;"))
+
     def test_struct_include_semicolon(self):
         src = ClangASTNode.load_from_text("struct s;", "test.c")
         assert_that(src.children[-1].signature, is_("struct s;"))
