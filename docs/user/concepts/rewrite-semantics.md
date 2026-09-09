@@ -98,7 +98,8 @@ within the range of a change associated with one of its ancestors.
    * same node:
      Before-text in order of insertion of change / in collection order;
      after-text in reverse order of insertion of change / in reversed collection order.  
-     Example: Surround Before N - ... - Surround Before 2 - Surround Before 1 - AST Node text - Surround After 1 - Surround After 2 - ... - Surround After N
+     Example: Surround Before N - ... - Surround Before 2 - Surround Before 1 - AST Node text -
+     Surround After 1 - Surround After 2 - ... - Surround After N
 
 The direction depends on the operator: multiple prepends (and surround before-texts) follow the
 order of insertion into the collection of changes, while multiple appends (and surround
@@ -126,7 +127,8 @@ Example of append and prepend of adjacent siblings at the same textual location.
      When there are multiple prepends, surrounds, and/or appends on the same node, each group
      of insertions follows its own ordering rule given above, and the groups combine in the
      same relative positions, e.g., for N prepends, M surrounds, and P appends:  
-     Prepend N - ... - Prepend 1 - Surround Before M - ... - Surround Before 1 - (AST Node text | replacement text) - Surround After 1 - ... - Surround After M - Append 1 - ... - Append P
+     Prepend N - ... - Prepend 1 - Surround Before M - ... - Surround Before 1 - (AST Node text | replacement text) -
+     Surround After 1 - ... - Surround After M - Append 1 - ... - Append P
 
 ## Summary
 
