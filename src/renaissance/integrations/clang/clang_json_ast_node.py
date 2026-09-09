@@ -1,7 +1,6 @@
 # create a class that inherits syntax tree ASTNode
 
 import json
-import os
 import re
 import subprocess
 import sys

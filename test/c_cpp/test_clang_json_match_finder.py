@@ -1,5 +1,5 @@
 import pytest
-from hamcrest import *
+from hamcrest import assert_that, has_length
 from more_itertools import last
 
 from renaissance.integrations.clang import CPatternFactory
