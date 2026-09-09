@@ -1,12 +1,31 @@
-from operator import is_not
-
 import pytest
 from hamcrest import assert_that, empty, has_length, instance_of, is_, is_in, is_not
 
 from renaissance.integrations.python.ast.factory import PythonFactory, PythonPatternFactory
 from renaissance.integrations.python.ast.rst_node import PythonRstNode
-from renaissance.integrations.types import *
-from renaissance.integrations.types import MatchAll, MatchOne, TranslationUnit
+from renaissance.integrations.types import (
+    Assert,
+    Assign,
+    AugAssign,
+    Break,
+    ClassDef,
+    Continue,
+    ExpressionStatement,
+    For,
+    FunctionDef,
+    If,
+    Import,
+    Match,
+    MatchAll,
+    MatchOne,
+    Pass,
+    Raise,
+    Return,
+    TranslationUnit,
+    Try,
+    While,
+    With,
+)
 from renaissance.syntax_tree.match_finder import is_match
 
 
@@ -102,7 +121,7 @@ class TestPythonicStyle:
         it = PythonRstNode.load_from_text("$pa")
         assert_that(it.ast_type, is_(MatchOne))
 
-    def python_does_not_parse_dollar(self):
+    def python_does_not_parse_dollar_dollar(self):
         it = PythonRstNode.load_from_text("$$pa")
         assert_that(it.ast_type, is_(MatchAll))
 
