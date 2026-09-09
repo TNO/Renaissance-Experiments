@@ -43,12 +43,12 @@ class TestClangAstNode:
         assert_that(src.children[-1].signature, is_("   int    x   =    0   ;"))
 
     @pytest.mark.skip(
-        "Known bug (see issue): load_from_text() caches file content encoded with "
-        "sys.getfilesystemencoding(), but libclang always parses/offsets unsaved_files "
-        "content as UTF-8 internally. When the filesystem encoding is not UTF-8, a "
-        "multi-byte UTF-8 character earlier in the file shifts every subsequent byte "
-        "offset, so slicing the (differently-sized) cached byte array with clang's "
-        "offsets returns corrupted text.",
+        "https://github.com/TNO/Renaissance.Py/issues/154 - load_from_text() caches file "
+        "content encoded with sys.getfilesystemencoding(), but libclang always parses/offsets "
+        "unsaved_files content as UTF-8 internally. When the filesystem encoding is not UTF-8, "
+        "a multi-byte UTF-8 character earlier in the file shifts every subsequent byte offset, "
+        "so slicing the (differently-sized) cached byte array with clang's offsets returns "
+        "corrupted text.",
     )
     def test_signature_after_multibyte_char_when_filesystem_encoding_is_not_utf8(self, mocker):
         # 'é' encodes as 1 byte in latin-1 but 2 bytes in UTF-8. libclang parses/reports
