@@ -12,3 +12,12 @@ def test_tree_sitter_nodes_expose_protocol_metadata():
     assert root.semantic_kind is SemanticKind.TRANSLATION_UNIT
     assert root.children[0].parser_kind == "function_definition"
     assert root.children[0].semantic_kind is SemanticKind.FUNCTION
+
+
+def test_tree_sitter_kind_key_preserves_unknown_parser_identity():
+    adapter = TreeSitterAdapter(tree_sitter_python)
+    parsed = adapter.parse_code("x = 1\n")
+    root = adapter.to_lst("x = 1\n", parsed).root
+
+    assert root.kind_key is SemanticKind.TRANSLATION_UNIT
+    assert root.children[0].kind_key == "expression_statement"
