@@ -1,8 +1,10 @@
 from renaissance.integrations.clang.predicates import (
     has_clang_semantic_kind,
     is_clang_compound_statement,
+    is_clang_constructor,
     is_clang_declaration_reference,
     is_clang_macro_definition,
+    is_clang_method,
     is_clang_type_reference,
 )
 from renaissance.syntax_tree.semantic_kind import SemanticKind
@@ -22,6 +24,10 @@ def test_clang_parser_predicates_cover_native_and_json_spellings():
     assert is_clang_declaration_reference(Node("DECL_REF_EXPR"))
     assert is_clang_compound_statement(Node("CompoundStmt"))
     assert is_clang_compound_statement(Node("COMPOUND_STMT"))
+    assert is_clang_method(Node("CXXMethodDecl"))
+    assert is_clang_method(Node("CXX_METHOD"))
+    assert is_clang_constructor(Node("CXXConstructorDecl"))
+    assert is_clang_constructor(Node("CXX_CONSTRUCTOR"))
 
 
 def test_clang_macro_and_semantic_predicates_are_explicit():

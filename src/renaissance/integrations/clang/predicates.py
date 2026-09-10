@@ -5,6 +5,8 @@ TYPE_REFERENCE_KINDS = frozenset({"TypeRef", "TYPE_REF", "type_identifier"})
 DECLARATION_REFERENCE_KINDS = frozenset({"DeclRefExpr", "DECL_REF_EXPR"})
 COMPOUND_STATEMENT_KINDS = frozenset({"CompoundStmt", "COMPOUND_STMT"})
 MACRO_DEFINITION_KINDS = frozenset({"MacroDefinition", "MACRO_DEFINITION"})
+METHOD_KINDS = frozenset({"CXXMethodDecl", "CXX_METHOD"})
+CONSTRUCTOR_KINDS = frozenset({"CXXConstructorDecl", "CXX_CONSTRUCTOR"})
 
 
 def is_clang_kind(node: NodeProtocol, *parser_kinds: str) -> bool:
@@ -25,6 +27,14 @@ def is_clang_compound_statement(node: NodeProtocol) -> bool:
 
 def is_clang_macro_definition(node: NodeProtocol) -> bool:
     return node.parser_kind in MACRO_DEFINITION_KINDS
+
+
+def is_clang_method(node: NodeProtocol) -> bool:
+    return node.parser_kind in METHOD_KINDS
+
+
+def is_clang_constructor(node: NodeProtocol) -> bool:
+    return node.parser_kind in CONSTRUCTOR_KINDS
 
 
 def has_clang_semantic_kind(node: NodeProtocol, kind: SemanticKind) -> bool:
