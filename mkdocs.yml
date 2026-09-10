@@ -143,6 +143,7 @@ nav:
 
   - Developer documentation:
       - Overview: developer/index.md
+      - Coding conventions: developer/coding-conventions.md
 
       - Architecture:
           - Overview: developer/architecture/index.md
