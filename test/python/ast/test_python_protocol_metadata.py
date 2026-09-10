@@ -26,3 +26,9 @@ def test_python_rst_exposes_protocol_metadata():
 
     assert root.parser_kind == "Module"
     assert root.semantic_kind is SemanticKind.TRANSLATION_UNIT
+
+
+def test_python_rst_kind_key_preserves_unknown_parser_identity():
+    root = PythonRstNode(ast.parse("match value:\n    case _:\n        pass\n").body[0])
+
+    assert root.kind_key == "Match"

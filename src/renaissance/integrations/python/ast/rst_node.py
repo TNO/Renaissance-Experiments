@@ -245,10 +245,14 @@ class PythonRstNode:
         self.extended_end_offset = self.end_offset
         self.is_statement = isinstance(self.node, ast.stmt)
 
+    @property
+    def kind_key(self) -> SemanticKind | str:
+        return self.semantic_kind if self.semantic_kind is not SemanticKind.NODE else self.parser_kind
+
     def __eq__(self, other):
         return (
             isinstance(other, type(self))
-            and self.ast_type == other.ast_type
+            and self.kind_key == other.kind_key
             and match_props(self.properties, other.properties, IRRELEVANT_PROPS)
             and match_children(self.children, other.children, IRRELEVANT_NODES)
         )
