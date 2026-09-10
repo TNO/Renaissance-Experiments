@@ -73,50 +73,50 @@ class TestExpression:
             [
                 (
                     "a == $hallo",
-                    "(BinaryOperation, , test.c[123:134]): |a == $hallo|\n  (Expression, a, test.c[123:124]): |a|\n"
+                    ("(BinaryOperation, , test.c[123:134]): |a == $hallo|\n  (Expression, a, test.c[123:124]): |a|\n"
                     "    (DeclarationExpression, a, test.c[123:124]): |a|\n  (MatchOne, $hallo, test.c[128:134]): |$hallo|\n"
-                    "    (MatchOne, $hallo, test.c[128:134]): |$hallo|\n",
+                    "    (MatchOne, $hallo, test.c[128:134]): |$hallo|\n"),
                 ),
                 (
                     "2 != 3",
-                    "(BinaryOperation, , test.c[105:111]): |2 != 3|\n  (Number, , test.c[105:106]): |2|\n"
-                    "  (Number, , test.c[110:111]): |3|\n",
+                    ("(BinaryOperation, , test.c[105:111]): |2 != 3|\n  (Number, , test.c[105:106]): |2|\n"
+                    "  (Number, , test.c[110:111]): |3|\n"),
                 ),
                 (
                     "a != b",
-                    "(BinaryOperation, , test.c[118:124]): |a != b|\n  (Expression, a, test.c[118:119]): |a|\n"
+                    ("(BinaryOperation, , test.c[118:124]): |a != b|\n  (Expression, a, test.c[118:119]): |a|\n"
                     "    (DeclarationExpression, a, test.c[118:119]): |a|\n  (Expression, b, test.c[123:124]): |b|\n"
-                    "    (DeclarationExpression, b, test.c[123:124]): |b|\n",
+                    "    (DeclarationExpression, b, test.c[123:124]): |b|\n"),
                 ),
                 (
                     "b != $world",
-                    "(BinaryOperation, , test.c[123:134]): |b != $world|\n  (Expression, b, test.c[123:124]): |b|\n"
+                    ("(BinaryOperation, , test.c[123:134]): |b != $world|\n  (Expression, b, test.c[123:124]): |b|\n"
                     "    (DeclarationExpression, b, test.c[123:124]): |b|\n  (MatchOne, $world, test.c[128:134]): |$world|\n"
-                    "    (MatchOne, $world, test.c[128:134]): |$world|\n",
+                    "    (MatchOne, $world, test.c[128:134]): |$world|\n"),
                 ),
                 (
                     "c > $foo",
-                    "(BinaryOperation, , test.c[121:129]): |c > $foo|\n  (Expression, c, test.c[121:122]): |c|\n"
+                    ("(BinaryOperation, , test.c[121:129]): |c > $foo|\n  (Expression, c, test.c[121:122]): |c|\n"
                     "    (DeclarationExpression, c, test.c[121:122]): |c|\n  (MatchOne, $foo, test.c[125:129]): |$foo|\n"
-                    "    (MatchOne, $foo, test.c[125:129]): |$foo|\n",
+                    "    (MatchOne, $foo, test.c[125:129]): |$foo|\n"),
                 ),
                 (
                     "d < $bar",
-                    "(BinaryOperation, , test.c[121:129]): |d < $bar|\n  (Expression, d, test.c[121:122]): |d|\n"
+                    ("(BinaryOperation, , test.c[121:129]): |d < $bar|\n  (Expression, d, test.c[121:122]): |d|\n"
                     "    (DeclarationExpression, d, test.c[121:122]): |d|\n  (MatchOne, $bar, test.c[125:129]): |$bar|\n"
-                    "    (MatchOne, $bar, test.c[125:129]): |$bar|\n",
+                    "    (MatchOne, $bar, test.c[125:129]): |$bar|\n"),
                 ),
                 (
                     "e >= $baz",
-                    "(BinaryOperation, , test.c[121:130]): |e >= $baz|\n  (Expression, e, test.c[121:122]): |e|\n"
+                    ("(BinaryOperation, , test.c[121:130]): |e >= $baz|\n  (Expression, e, test.c[121:122]): |e|\n"
                     "    (DeclarationExpression, e, test.c[121:122]): |e|\n  (MatchOne, $baz, test.c[126:130]): |$baz|\n"
-                    "    (MatchOne, $baz, test.c[126:130]): |$baz|\n",
+                    "    (MatchOne, $baz, test.c[126:130]): |$baz|\n"),
                 ),
                 (
                     "f <= $qux",
-                    "(BinaryOperation, , test.c[121:130]): |f <= $qux|\n  (Expression, f, test.c[121:122]): |f|\n"
+                    ("(BinaryOperation, , test.c[121:130]): |f <= $qux|\n  (Expression, f, test.c[121:122]): |f|\n"
                     "    (DeclarationExpression, f, test.c[121:122]): |f|\n  (MatchOne, $qux, test.c[126:130]): |$qux|\n"
-                    "    (MatchOne, $qux, test.c[126:130]): |$qux|\n",
+                    "    (MatchOne, $qux, test.c[126:130]): |$qux|\n"),
                 ),
                 (
                     "g--",
@@ -128,8 +128,8 @@ class TestExpression:
                 ),
                 (
                     "!i",
-                    "(UnaryOperation, , test.c[111:113]): |!i|\n  (Expression, i, test.c[112:113]): |i|\n"
-                    "    (DeclarationExpression, i, test.c[112:113]): |i|\n",
+                    ("(UnaryOperation, , test.c[111:113]): |!i|\n  (Expression, i, test.c[112:113]): |i|\n"
+                    "    (DeclarationExpression, i, test.c[112:113]): |i|\n"),
                 ),
             ],
         ),

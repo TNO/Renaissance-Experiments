@@ -1,9 +1,10 @@
 from collections.abc import Iterable, Sequence
+from typing import Self
 
 from renaissance.integrations.types import MatchAll, MatchOne
 from renaissance.utils.ast_utils import use_dollar
 
-from .node_protocol import AstProtocol, NodeProtocol
+from .node_protocol import NodeProtocol
 from .pattern_kind import PatternKind
 from .semantic_kind import SemanticKind
 

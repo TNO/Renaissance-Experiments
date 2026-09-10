@@ -136,8 +136,8 @@ class TestStatements(TestCMatchFinder):
                                 "if(a == 3){\n                b=5;\n            }\n            else{\n                b--;\n            }",
                             ],
                             "$y": [
-                                "while(a != 3){\n                if  (a == 4 && b == 5){\n                    b = a;\n                }\n"
-                                "            }",
+                                ("while(a != 3){\n                if  (a == 4 && b == 5){\n                    b = a;\n                }\n"
+                                "            }"),
                             ],
                         },
                     ],
