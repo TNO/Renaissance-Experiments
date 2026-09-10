@@ -99,6 +99,8 @@ class PythonFactory:
 
             # clazz.name = ASTExtension.ast_name
             clazz.ast_type = ASTExtension.ast_type
+            clazz.parser_kind = ASTExtension.parser_kind
+            clazz.semantic_kind = ASTExtension.semantic_kind
             clazz.properties = ASTExtension.ast_properties
             clazz.children = ASTExtension.ast_children
             clazz.signature = ASTExtension.ast_signature

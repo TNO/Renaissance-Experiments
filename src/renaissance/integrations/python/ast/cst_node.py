@@ -5,8 +5,10 @@ import libcst
 from libcst import BaseCompoundStatement, BaseSmallStatement, ClassDef, CSTNode, FunctionDef, MetadataWrapper
 from libcst.metadata import WhitespaceInclusivePositionProvider
 
+from renaissance.integrations.python.ast.kinds import PYTHON_KIND_MAP
 from renaissance.integrations.python.ast.util import convert
 from renaissance.integrations.types import KIND_MAP, UnknownType
+from renaissance.syntax_tree.semantic_kind import SemanticKind
 from renaissance.utils.ast_utils import next_sibling, preceding_sibling
 
 
@@ -46,6 +48,8 @@ class PythonCstNode:
         self.node = node
 
         self.is_statement = isinstance(self.node, (BaseSmallStatement, BaseCompoundStatement))
+        self.parser_kind = type(node).__name__
+        self.semantic_kind = PYTHON_KIND_MAP.get(self.parser_kind, SemanticKind.NODE)
 
         # for matcher
         self.ast_type = KIND_MAP.get(type(node).__name__, UnknownType)  # type(node))
