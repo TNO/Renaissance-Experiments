@@ -185,17 +185,21 @@ class ClangASTNode(ASTNode):
         if self.ast_type == DeclarationExpression:
             self._properties["name"] = self._name
 
+    @property
+    def kind_key(self) -> SemanticKind | str:
+        return self.semantic_kind if self.semantic_kind is not SemanticKind.NODE else self.parser_kind
+
     def __eq__(self, other):
         return (
             other
             and isinstance(other, type(self))
-            and self.ast_type == other.ast_type
+            and self.kind_key == other.kind_key
             and match_props(self.properties, other.properties, IRRELEVANT_PROPS)
             and match_children(self.children, other.children, IRRELEVANT_NODES)
         )
 
     def __hash__(self):
-        return hash((self.ast_type, frozenset(self.properties.items())))
+        return hash((self.kind_key, frozenset(self.properties.items())))
 
     @override
     @staticmethod
