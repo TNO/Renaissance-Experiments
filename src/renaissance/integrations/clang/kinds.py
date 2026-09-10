@@ -8,6 +8,7 @@ CLANG_KIND_MAP = {
     "FUNCTION_DECL": SemanticKind.FUNCTION,
     "CXXMethodDecl": SemanticKind.FUNCTION,
     "CallExpr": SemanticKind.CALL,
+    "CALL_EXPR": SemanticKind.CALL,
     "DeclRefExpr": SemanticKind.NAME,
     "IntegerLiteral": SemanticKind.LITERAL,
     "INTEGER_LITERAL": SemanticKind.LITERAL,
