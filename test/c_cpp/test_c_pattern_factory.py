@@ -1,12 +1,11 @@
 import pytest
-from hamcrest import assert_that, contains_string, greater_than_or_equal_to, is_, less_than_or_equal_to, not_, not_none, starts_with
-from more_itertools import last
+from hamcrest import assert_that, contains_string, greater_than_or_equal_to, is_, less_than_or_equal_to, not_, not_none
 
 from c_cpp.factories import Factories
 from renaissance.integrations.clang import ClangASTNode, CPatternFactory
 from renaissance.integrations.clang.c_pattern_factory import derive_header_text
-from renaissance.integrations.clang.predicates import is_clang_compound_statement, is_clang_declaration_reference, is_clang_kind
-from renaissance.syntax_tree import ASTFactory, ASTShower
+from renaissance.integrations.clang.predicates import is_clang_compound_statement, is_clang_declaration_reference
+from renaissance.syntax_tree import ASTShower
 from renaissance.syntax_tree.ast_finder import find_nodes
 from renaissance.syntax_tree.semantic_kind import SemanticKind
 
@@ -68,50 +67,66 @@ class TestExpression:
             [
                 (
                     "a == $hallo",
-                    "(binary_operation, , test.c[123:134]): |a == $hallo|\n  (UNEXPOSED_EXPR, a, test.c[123:124]): |a|\n"
-                    "    (DECL_REF_EXPR, a, test.c[123:124]): |a|\n  (MatchOne, $hallo, test.c[128:134]): |$hallo|\n"
-                    "    (MatchOne, $hallo, test.c[128:134]): |$hallo|\n",
+                    (
+                        "(binary_operation, , test.c[123:134]): |a == $hallo|\n  (UNEXPOSED_EXPR, a, test.c[123:124]): |a|\n"
+                        "    (DECL_REF_EXPR, a, test.c[123:124]): |a|\n  (MatchOne, $hallo, test.c[128:134]): |$hallo|\n"
+                        "    (MatchOne, $hallo, test.c[128:134]): |$hallo|\n"
+                    ),
                 ),
                 (
                     "2 != 3",
-                    "(binary_operation, , test.c[105:111]): |2 != 3|\n  (literal, , test.c[105:106]): |2|\n"
-                    "  (literal, , test.c[110:111]): |3|\n",
+                    (
+                        "(binary_operation, , test.c[105:111]): |2 != 3|\n  (literal, , test.c[105:106]): |2|\n"
+                        "  (literal, , test.c[110:111]): |3|\n"
+                    ),
                 ),
                 (
                     "a != b",
-                    "(binary_operation, , test.c[118:124]): |a != b|\n  (UNEXPOSED_EXPR, a, test.c[118:119]): |a|\n"
-                    "    (DECL_REF_EXPR, a, test.c[118:119]): |a|\n  (UNEXPOSED_EXPR, b, test.c[123:124]): |b|\n"
-                    "    (DECL_REF_EXPR, b, test.c[123:124]): |b|\n",
+                    (
+                        "(binary_operation, , test.c[118:124]): |a != b|\n  (UNEXPOSED_EXPR, a, test.c[118:119]): |a|\n"
+                        "    (DECL_REF_EXPR, a, test.c[118:119]): |a|\n  (UNEXPOSED_EXPR, b, test.c[123:124]): |b|\n"
+                        "    (DECL_REF_EXPR, b, test.c[123:124]): |b|\n"
+                    ),
                 ),
                 (
                     "b != $world",
-                    "(binary_operation, , test.c[123:134]): |b != $world|\n  (UNEXPOSED_EXPR, b, test.c[123:124]): |b|\n"
-                    "    (DECL_REF_EXPR, b, test.c[123:124]): |b|\n  (MatchOne, $world, test.c[128:134]): |$world|\n"
-                    "    (MatchOne, $world, test.c[128:134]): |$world|\n",
+                    (
+                        "(binary_operation, , test.c[123:134]): |b != $world|\n  (UNEXPOSED_EXPR, b, test.c[123:124]): |b|\n"
+                        "    (DECL_REF_EXPR, b, test.c[123:124]): |b|\n  (MatchOne, $world, test.c[128:134]): |$world|\n"
+                        "    (MatchOne, $world, test.c[128:134]): |$world|\n"
+                    ),
                 ),
                 (
                     "c > $foo",
-                    "(binary_operation, , test.c[121:129]): |c > $foo|\n  (UNEXPOSED_EXPR, c, test.c[121:122]): |c|\n"
-                    "    (DECL_REF_EXPR, c, test.c[121:122]): |c|\n  (MatchOne, $foo, test.c[125:129]): |$foo|\n"
-                    "    (MatchOne, $foo, test.c[125:129]): |$foo|\n",
+                    (
+                        "(binary_operation, , test.c[121:129]): |c > $foo|\n  (UNEXPOSED_EXPR, c, test.c[121:122]): |c|\n"
+                        "    (DECL_REF_EXPR, c, test.c[121:122]): |c|\n  (MatchOne, $foo, test.c[125:129]): |$foo|\n"
+                        "    (MatchOne, $foo, test.c[125:129]): |$foo|\n"
+                    ),
                 ),
                 (
                     "d < $bar",
-                    "(binary_operation, , test.c[121:129]): |d < $bar|\n  (UNEXPOSED_EXPR, d, test.c[121:122]): |d|\n"
-                    "    (DECL_REF_EXPR, d, test.c[121:122]): |d|\n  (MatchOne, $bar, test.c[125:129]): |$bar|\n"
-                    "    (MatchOne, $bar, test.c[125:129]): |$bar|\n",
+                    (
+                        "(binary_operation, , test.c[121:129]): |d < $bar|\n  (UNEXPOSED_EXPR, d, test.c[121:122]): |d|\n"
+                        "    (DECL_REF_EXPR, d, test.c[121:122]): |d|\n  (MatchOne, $bar, test.c[125:129]): |$bar|\n"
+                        "    (MatchOne, $bar, test.c[125:129]): |$bar|\n"
+                    ),
                 ),
                 (
                     "e >= $baz",
-                    "(binary_operation, , test.c[121:130]): |e >= $baz|\n  (UNEXPOSED_EXPR, e, test.c[121:122]): |e|\n"
-                    "    (DECL_REF_EXPR, e, test.c[121:122]): |e|\n  (MatchOne, $baz, test.c[126:130]): |$baz|\n"
-                    "    (MatchOne, $baz, test.c[126:130]): |$baz|\n",
+                    (
+                        "(binary_operation, , test.c[121:130]): |e >= $baz|\n  (UNEXPOSED_EXPR, e, test.c[121:122]): |e|\n"
+                        "    (DECL_REF_EXPR, e, test.c[121:122]): |e|\n  (MatchOne, $baz, test.c[126:130]): |$baz|\n"
+                        "    (MatchOne, $baz, test.c[126:130]): |$baz|\n"
+                    ),
                 ),
                 (
                     "f <= $qux",
-                    "(binary_operation, , test.c[121:130]): |f <= $qux|\n  (UNEXPOSED_EXPR, f, test.c[121:122]): |f|\n"
-                    "    (DECL_REF_EXPR, f, test.c[121:122]): |f|\n  (MatchOne, $qux, test.c[126:130]): |$qux|\n"
-                    "    (MatchOne, $qux, test.c[126:130]): |$qux|\n",
+                    (
+                        "(binary_operation, , test.c[121:130]): |f <= $qux|\n  (UNEXPOSED_EXPR, f, test.c[121:122]): |f|\n"
+                        "    (DECL_REF_EXPR, f, test.c[121:122]): |f|\n  (MatchOne, $qux, test.c[126:130]): |$qux|\n"
+                        "    (MatchOne, $qux, test.c[126:130]): |$qux|\n"
+                    ),
                 ),
                 (
                     "g--",
@@ -123,8 +138,10 @@ class TestExpression:
                 ),
                 (
                     "!i",
-                    "(unary_operation, , test.c[111:113]): |!i|\n  (UNEXPOSED_EXPR, i, test.c[112:113]): |i|\n"
-                    "    (DECL_REF_EXPR, i, test.c[112:113]): |i|\n",
+                    (
+                        "(unary_operation, , test.c[111:113]): |!i|\n  (UNEXPOSED_EXPR, i, test.c[112:113]): |i|\n"
+                        "    (DECL_REF_EXPR, i, test.c[112:113]): |i|\n"
+                    ),
                 ),
             ],
         ),

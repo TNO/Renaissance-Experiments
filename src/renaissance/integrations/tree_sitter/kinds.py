@@ -64,7 +64,5 @@ TREE_SITTER_KIND_MAP = {
     "import_from_statement": SemanticKind.IMPORT,
     "binary_operator": SemanticKind.BINARY_OPERATION,
     "unary_operator": SemanticKind.UNARY_OPERATION,
-    "await": SemanticKind.EXPRESSION,
     "with": SemanticKind.LOOP,
-    "delete_statement": SemanticKind.STATEMENT,
 }

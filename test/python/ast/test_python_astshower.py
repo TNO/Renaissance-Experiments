@@ -1,5 +1,5 @@
 import pytest
-from hamcrest import assert_that, contains_string, is_, not_, starts_with
+from hamcrest import assert_that, contains_string, not_, starts_with
 
 from renaissance.integrations.python.ast.factory import PythonFactory, PythonPatternFactory
 from renaissance.integrations.python.ast.rst_node import PythonRstNode
@@ -25,11 +25,6 @@ class TestPythonShower:
         assert_that(text, contains_string("ba(55)"))
 
     def test_show_body(self):
-        expected = (
-            "[(ExpressionStatement, ba(55), test.py[0:6]): |ba(55)|\n, (ExpressionStatement, ca(555), test.py[7:14]): |ca(555)|\n,"
-            " (ExpressionStatement, lo(4444), test.py[15:23]): |lo(4444)|\n, (Assign, na, test.py[24:29]): |na=55|\n]"
-        )
-
         assert_that(str(self.atu.children), contains_string("ba(55)"))
 
     def test_show_ast_filter_implicit_node(self):

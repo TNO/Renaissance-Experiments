@@ -1,5 +1,5 @@
 import pytest
-from hamcrest import assert_that, contains_string, is_, matches_regexp, not_, starts_with
+from hamcrest import assert_that, contains_string, matches_regexp, not_, starts_with
 
 from renaissance.integrations.clang import ClangASTNode, CPatternFactory
 from renaissance.syntax_tree import ASTFactory, ASTShower
