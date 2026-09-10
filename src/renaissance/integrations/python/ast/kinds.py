@@ -1,0 +1,28 @@
+from renaissance.syntax_tree.semantic_kind import SemanticKind
+
+PYTHON_KIND_MAP = {
+    "Module": SemanticKind.TRANSLATION_UNIT,
+    "FunctionDef": SemanticKind.FUNCTION,
+    "AsyncFunctionDef": SemanticKind.FUNCTION,
+    "ClassDef": SemanticKind.CLASS,
+    "Call": SemanticKind.CALL,
+    "Name": SemanticKind.NAME,
+    "arg": SemanticKind.PARAMETER,
+    "Constant": SemanticKind.LITERAL,
+    "Assign": SemanticKind.ASSIGNMENT,
+    "AnnAssign": SemanticKind.ASSIGNMENT,
+    "AugAssign": SemanticKind.ASSIGNMENT,
+    "NamedExpr": SemanticKind.ASSIGNMENT,
+    "BinOp": SemanticKind.BINARY_OPERATION,
+    "BoolOp": SemanticKind.BINARY_OPERATION,
+    "Compare": SemanticKind.BINARY_OPERATION,
+    "UnaryOp": SemanticKind.UNARY_OPERATION,
+    "If": SemanticKind.CONDITIONAL,
+    "IfExp": SemanticKind.CONDITIONAL,
+    "For": SemanticKind.LOOP,
+    "AsyncFor": SemanticKind.LOOP,
+    "While": SemanticKind.LOOP,
+    "Return": SemanticKind.RETURN,
+    "Import": SemanticKind.IMPORT,
+    "ImportFrom": SemanticKind.IMPORT,
+}

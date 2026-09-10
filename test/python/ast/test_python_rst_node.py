@@ -31,6 +31,7 @@ from renaissance.integrations.types import (
     TypeAlias,
 )
 from renaissance.syntax_tree import ASTShower
+from renaissance.syntax_tree.semantic_kind import SemanticKind
 from utils_for_tests import reject_unsupported_code
 
 
@@ -45,6 +46,24 @@ class TestPythonRstNode:
     def test_type_alias(self):
         it = self.factory.create_from_text("type UserId = int", "context.py")
         assert_that(it.children[0].ast_type(), is_(TypeAlias))
+
+    def test_exposes_parser_and_semantic_kinds(self):
+        root = self.factory.create_from_text("def f(value):\n    return value\n")
+        function = root.children[0]
+        parameter = function.children[0].children[1].children[0]
+        returned_name = function.children[1].children[0].children[0]
+
+        assert function.parser_kind == "FunctionDef"
+        assert function.semantic_kind is SemanticKind.FUNCTION
+        assert parameter.semantic_kind is SemanticKind.PARAMETER
+        assert returned_name.semantic_kind is SemanticKind.NAME
+
+    def test_unknown_python_kind_keeps_parser_name(self):
+        root = self.factory.create_from_text("x = {1, 2}")
+        set_node = root.children[0].children[1]
+
+        assert set_node.parser_kind == "Set"
+        assert set_node.semantic_kind is SemanticKind.NODE
 
     def test_slice(self):
         it = self.pattern_factory.create_expression("items[1:2:3]")

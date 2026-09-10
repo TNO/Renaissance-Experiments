@@ -5,9 +5,11 @@ from collections.abc import Callable, Sequence
 from pathlib import Path
 from typing import Any, Self
 
+from renaissance.integrations.python.ast.kinds import PYTHON_KIND_MAP
 from renaissance.integrations.python.ast.util import convert
 from renaissance.integrations.types import KIND_MAP, OPERATOR_MAP, Assert, FunctionDef, Global, ImplicitNode, Tuple, UnknownType
 from renaissance.syntax_tree.match_finder import find_in_list
+from renaissance.syntax_tree.semantic_kind import SemanticKind
 from renaissance.utils.ast_utils import (
     format_node,
     match_children,
@@ -189,6 +191,8 @@ class PythonRstNode:
         self.node = node
         self.parent = parent
         self.translation_unit: PythonRstTranslationUnit = translation_unit
+        self.parser_kind = type(node).__name__
+        self.semantic_kind = PYTHON_KIND_MAP.get(self.parser_kind, SemanticKind.NODE)
         self.ast_type = KIND_MAP.get(type(node).__name__, UnknownType)
         if self.ast_type == UnknownType:
             print(f'"{type(node).__name__}": {type(node).__name__},')
