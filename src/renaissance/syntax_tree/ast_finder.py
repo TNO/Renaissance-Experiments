@@ -72,5 +72,5 @@ def find_semantic_kind(ast_node: NodeProtocol, kind: SemanticKind) -> Sequence[N
     return find_nodes(ast_node, lambda node: node.semantic_kind is kind)
 
 
-def matches_kind(ast_node, kind: type[Type]) -> bool:
+def matches_kind(ast_node, kind) -> bool:
     return isinstance(ast_node.ast_type(), kind)
