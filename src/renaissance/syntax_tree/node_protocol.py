@@ -8,7 +8,6 @@ from .semantic_kind import SemanticKind
 class NodeProtocol(Protocol):
     """Structural interface consumed by generic syntax-tree algorithms."""
 
-    ast_type: object
     parser_kind: str
     semantic_kind: SemanticKind
     properties: Mapping[str, Any]

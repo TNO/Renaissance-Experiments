@@ -4,7 +4,6 @@ from renaissance.syntax_tree.semantic_kind import SemanticKind
 
 
 class FakeNode:
-    ast_type = object()
     parser_kind = "fake_node"
     semantic_kind = SemanticKind.NODE
     properties = {}
@@ -22,7 +21,7 @@ def test_matcher_prefers_semantic_kind_over_legacy_type():
     pattern = FakeNode()
     source.semantic_kind = SemanticKind.CALL
     pattern.semantic_kind = SemanticKind.CALL
-    source.ast_type = object()
-    pattern.ast_type = object()
+    source.parser_kind = "source_node"
+    pattern.parser_kind = "pattern_node"
 
     assert is_match(source, pattern)
