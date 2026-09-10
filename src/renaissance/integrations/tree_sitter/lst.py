@@ -2,7 +2,6 @@ import sys
 from typing import Any, Self, cast
 
 from renaissance.integrations.tree_sitter.kinds import TREE_SITTER_KIND_MAP
-from renaissance.integrations.types import KIND_MAP, UnknownType
 from renaissance.syntax_tree.semantic_kind import SemanticKind
 from renaissance.utils.ast_utils import format_node, match_children, match_props, next_sibling, preceding_sibling
 
@@ -31,9 +30,6 @@ class LSTNode:
 
         self.parser_kind = node_type
         self.semantic_kind = TREE_SITTER_KIND_MAP.get(node_type, SemanticKind.NODE)
-        self.ast_type = KIND_MAP.get(node_type, UnknownType)
-        if self.ast_type == UnknownType:
-            print(f'"{node_type}": {node_type},')
 
         self.is_implicit = True
         self.show_props = False
@@ -95,7 +91,7 @@ class LSTNode:
 
     @property
     def node(self):
-        return self.ast_type()
+        return self
 
     def __repr__(self):
         return format_node(self)

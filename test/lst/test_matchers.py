@@ -4,9 +4,9 @@ from hamcrest import assert_that, has_length
 
 from renaissance.integrations.tree_sitter.adapter import TreeSitterAdapter
 from renaissance.integrations.tree_sitter.lst import LSTNode
-from renaissance.integrations.types import Call
-from renaissance.syntax_tree.ast_finder import find_ast_type
+from renaissance.syntax_tree.ast_finder import find_semantic_kind
 from renaissance.syntax_tree.match_finder import is_match
+from renaissance.syntax_tree.semantic_kind import SemanticKind
 from renaissance.utils.ast_utils import traverse
 
 
@@ -53,11 +53,11 @@ class TestMatchers:
         assert_that(is_match(self.class_node, pattern))
 
     def test_node_type_match(self):
-        matches = [node for node in traverse(self.if_node) if node.ast_type == Call]
+        matches = [node for node in traverse(self.if_node) if node.semantic_kind is SemanticKind.CALL]
         assert_that(matches, has_length(1))
 
     def test_node_type_match_exact_type(self):
-        matches = find_ast_type(self.if_node, Call)
+        matches = find_semantic_kind(self.if_node, SemanticKind.CALL)
         assert_that(matches, has_length(1))
 
     def make_pattern(self, code: str, adapter: any) -> LSTNode:
