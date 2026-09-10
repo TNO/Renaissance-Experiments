@@ -18,11 +18,17 @@ from renaissance.integrations.types import (
     VariableDef,
 )
 from renaissance.syntax_tree.ast_factory import ASTFactory
-from renaissance.syntax_tree.ast_finder import find_ast_type
+from renaissance.syntax_tree.ast_finder import find_ast_type, find_nodes
 from renaissance.syntax_tree.ast_node import ASTNode
 from renaissance.syntax_tree.ast_shower import ASTShower
 
 SHOW_NODE = False
+
+
+def _matches_kind(node, kind) -> bool:
+    if isinstance(kind, type):
+        return isinstance(node.ast_type(), kind)
+    return kind(node)
 
 
 def derive_header_text(language: str, ref_node: ASTNode | None):
@@ -167,7 +173,7 @@ class CPatternFactory:
         # print(self.header + text)
         root = self.factory.create_from_text(self.header + text, "test." + self.language)
         if kind:
-            return first(find_ast_type(root.children[-1], kind))
+            return first(find_nodes(root.children[-1], lambda node: _matches_kind(node, kind)))
         return root
 
     def create_statement(
@@ -207,7 +213,7 @@ class CPatternFactory:
         # node of the specified kind
 
         body = first(find_ast_type(root.children[-1], CompoundStatement)).children
-        return list(n for n in body if n.is_part_of_translation_unit and first(find_ast_type(n, kind)))
+        return list(n for n in body if n.is_part_of_translation_unit and first(find_nodes(n, lambda node: _matches_kind(node, kind))))
 
     def _create(self, text: str) -> ASTNode:
         atu = self.factory.create_from_text(text, "test." + self.language)

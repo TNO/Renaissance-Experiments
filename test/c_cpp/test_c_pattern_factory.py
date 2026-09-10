@@ -13,8 +13,9 @@ from renaissance.integrations.types import (
     MatchOne,
     VariableDef,
 )
-from renaissance.syntax_tree import ASTShower
+from renaissance.syntax_tree import ASTFactory, ASTShower
 from renaissance.syntax_tree.ast_finder import find_ast_type
+from renaissance.syntax_tree.semantic_kind import SemanticKind
 
 
 class TestCPatternFactory:
@@ -274,3 +275,14 @@ class TestUseAtuToCreatePatterns:
         raw = node.signature
 
         assert_that(statement_text, starts_with(raw))
+
+    def test_create_statement_accepts_protocol_predicate(self):
+        factory = ASTFactory(ClangASTNode, [])
+        pattern_factory = CPatternFactory(factory)
+
+        statement = pattern_factory.create_statement(
+            "a == 3;",
+            kind=lambda node: node.semantic_kind is SemanticKind.BINARY_OPERATION,
+        )
+
+        assert statement.semantic_kind is SemanticKind.BINARY_OPERATION
