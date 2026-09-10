@@ -16,12 +16,6 @@ from renaissance.integrations.clang.predicates import (
     is_clang_declaration_reference,
     is_clang_kind,
 )
-from renaissance.integrations.types import (
-    KIND_MAP,
-    MatchAll,
-    MatchOne,
-    UnknownType,
-)
 from renaissance.syntax_tree import ASTNode, ASTReference
 from renaissance.syntax_tree.pattern_kind import PatternKind
 from renaissance.syntax_tree.semantic_kind import SemanticKind
@@ -115,7 +109,6 @@ class ClangJsonASTNode(ASTNode):
             "MatchOne": PatternKind.MATCH_ONE,
             "MatchAll": PatternKind.MATCH_ALL,
         }.get(self.parser_kind)
-        self.ast_type = KIND_MAP.get(self._kind, UnknownType)
         self._name = insert_name if insert_name is not None else self._derive_name()
         # a fake child is introduced to handle the case where the type of declaration is not found
         # for example in the case of a base type.
@@ -159,12 +152,10 @@ class ClangJsonASTNode(ASTNode):
             # deep clone the type node and remove the parentheses
         elif is_clang_declaration_reference(self):
             if self.name.startswith("$$"):
-                self._kind = MatchAll.__name__
-                self.ast_type = MatchAll
+                self._kind = "MatchAll"
                 self.pattern_kind = PatternKind.MATCH_ALL
             elif self.name.startswith("$"):
-                self._kind = MatchOne.__name__
-                self.ast_type = MatchOne
+                self._kind = "MatchOne"
                 self.pattern_kind = PatternKind.MATCH_ONE
         self._children = self.__inserted_children + [
             ClangJsonASTNode(
@@ -596,12 +587,12 @@ class ReferenceHelper:
                             matches = False
                         parent = parent.parent
                     if matches:
-                        node_ids.append((node.ast_type, node_id))
+                        node_ids.append((node.parser_kind, node_id))
                 if ctor_type != EMPTY_STR and is_clang_kind(node, "CXXConstructorDecl", "CXX_CONSTRUCTOR"):
                     # link all matching
                     matches = node._get(["type", "qualType"], EMPTY_STR) == ctor_type
                     if matches:
-                        node_ids.append((node.ast_type, node_id))
+                        node_ids.append((node.parser_kind, node_id))
             return node_ids
         except Exception:
             pass
