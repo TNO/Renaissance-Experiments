@@ -4,12 +4,24 @@ from renaissance.integrations.types import MatchAll, MatchOne, Type
 from renaissance.utils.ast_utils import use_dollar
 
 from .node_protocol import AstProtocol, NodeProtocol
+from .pattern_kind import PatternKind
 
 IRRELEVANT_PROPS = {"macro_expansion", "start_point", "end_point", "source_code", "location", "type"}
 
 MIS_MATCH = -12
 INCOMPLETE_MATCH = -11
 _TOP_LEVEL_KINDS = {"Module", "TRANSLATION_UNIT"}
+
+
+def pattern_kind(node: NodeProtocol) -> PatternKind | None:
+    value = getattr(node, "pattern_kind", None)
+    if value is not None:
+        return value
+    if node.ast_type == MatchOne:
+        return PatternKind.MATCH_ONE
+    if node.ast_type == MatchAll:
+        return PatternKind.MATCH_ALL
+    return None
 
 
 class Variant:
@@ -86,7 +98,7 @@ def is_match_tree(src: Sequence | None, cmp: Sequence | None, expansions=None):
 
 
 def variant_in_match_stmt(src: NodeProtocol, cmp: NodeProtocol, expansions) -> list:
-    if cmp.ast_type == MatchOne and cmp.name:
+    if pattern_kind(cmp) is PatternKind.MATCH_ONE and cmp.name:
         matched = _resolve_match_one(cmp.name, src, expansions)
         return [Variant(0, expansions, None, 0, 0)] if matched else []
     if is_match_dict(src.properties, cmp.properties, expansions) and src.ast_type == cmp.ast_type:
@@ -99,7 +111,7 @@ def variant_in_match_stmt(src: NodeProtocol, cmp: NodeProtocol, expansions) -> l
 
 def _advance_match_all(variant: Variant, cmp: Sequence, src: Sequence, i: int, new_variants: list):
     """Advance variant.index past consecutive MATCH_ALL pattern nodes, forking new_variants as needed."""
-    while cmp[variant.index].ast_type == MatchAll:
+    while pattern_kind(cmp[variant.index]) is PatternKind.MATCH_ALL:
         current_name = cmp[variant.index].name
         if variant.expansion_start == -1:
             variant.expansion_start = i
@@ -183,7 +195,7 @@ def find_variants(src: Sequence, cmp: Sequence, expansion=None, start: int = 0, 
             if variant.index == len(cmp):
                 next_variants.append(variant)
                 continue
-            if cmp[variant.index].ast_type != MatchAll and (
+            if pattern_kind(cmp[variant.index]) is not PatternKind.MATCH_ALL and (
                 child_variants := variant_in_match_stmt(src[i], cmp[variant.index], variant.exp)
             ):
                 _apply_child_match(variant, child_variants, cmp, src, i, next_variants)
@@ -203,7 +215,7 @@ def find_variants(src: Sequence, cmp: Sequence, expansion=None, start: int = 0, 
             continue
         if variant.index == len(cmp) - 1:
             last_cmp = cmp[variant.index]
-            trailing_wildcard = last_cmp.ast_type == MatchAll and last_cmp.name not in variant.exp
+            trailing_wildcard = pattern_kind(last_cmp) is PatternKind.MATCH_ALL and last_cmp.name not in variant.exp
             if not trailing_wildcard:
                 continue
             key = variant.greedy if variant.expansion_start != -1 else last_cmp.name

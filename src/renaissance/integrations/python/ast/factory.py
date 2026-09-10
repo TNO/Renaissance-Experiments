@@ -15,6 +15,7 @@ from renaissance.integrations.tree_sitter.lst import LSTNode
 from renaissance.integrations.types import Arg, DeclarationExpression, ExpressionStatement, MatchAll, MatchOne, Name, Type
 from renaissance.syntax_tree.match_finder import is_match
 from renaissance.syntax_tree.node_protocol import NodeProtocol
+from renaissance.syntax_tree.pattern_kind import PatternKind
 from renaissance.utils.ast_utils import replace_dollar, use_dollar
 
 _MATCH_ALL_RE = re.compile(r"^" + re.escape(MATCH_ALL) + r"\w+$")
@@ -29,6 +30,9 @@ class PythonPattern(NodeProtocol):
         if type(node) is str:
             print(node)
             return
+        self.parser_kind = getattr(node, "parser_kind", type(node).__name__)
+        self.semantic_kind = getattr(node, "semantic_kind", None)
+        self.pattern_kind = None
         self.ast_type: Type = self.derive_type(node)
 
         self.properties: dict = node.properties
@@ -74,8 +78,10 @@ class PythonPattern(NodeProtocol):
 
         if node.ast_type in [DeclarationExpression, ExpressionStatement, Name, Arg]:
             if _MATCH_ALL_RE.match(signature):
+                self.pattern_kind = PatternKind.MATCH_ALL
                 return MatchAll
             if _MATCH_ONE_RE.match(signature):
+                self.pattern_kind = PatternKind.MATCH_ONE
                 return MatchOne
 
         return node.ast_type
