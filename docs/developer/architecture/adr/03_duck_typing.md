@@ -42,8 +42,8 @@ expected by the consumers.
 The current implementation exposes `NodeProtocol` as the canonical structural contract. Nodes also expose
 `parser_kind` and `semantic_kind`; parser-specific mappings remain inside their integration. `PatternKind` is
 separate from node classification and represents matcher behavior such as one-node and all-node placeholders.
-Adapter equality uses `semantic_kind` when it is mapped and falls back to `parser_kind` for unmapped nodes;
-the legacy `ast_type` property is retained only as transitional adapter compatibility.
+Adapter equality uses `semantic_kind` when it is mapped and falls back to `parser_kind` for unmapped nodes.
+AST display defaults to semantic-first labels and accepts an explicit parser-kind display option for diagnostics.
 
 ```python
 @runtime_checkable
