@@ -5,22 +5,23 @@ from more_itertools import first
 from more_itertools.more import last
 
 from renaissance.integrations.clang.cpp_utils import CPPUtils
+from renaissance.integrations.clang.predicates import (
+    has_clang_semantic_kind,
+    is_clang_compound_statement,
+    is_clang_macro_definition,
+)
 from renaissance.integrations.types import (
     Call,
     CompoundStatement,
     Declaration,
-    FunctionDef,
-    InclusionDirective,
-    MacroDef,
     ParenthesizedExpression,
     Type,
-    TypedefDef,
-    VariableDef,
 )
 from renaissance.syntax_tree.ast_factory import ASTFactory
 from renaissance.syntax_tree.ast_finder import find_ast_type, find_nodes
 from renaissance.syntax_tree.ast_node import ASTNode
 from renaissance.syntax_tree.ast_shower import ASTShower
+from renaissance.syntax_tree.semantic_kind import SemanticKind
 
 SHOW_NODE = False
 
@@ -37,7 +38,11 @@ def derive_header_text(language: str, ref_node: ASTNode | None):
     if ref_node:
         language = ref_node.filename.split(".")[-1]
         offset = min(
-            (n.offset for n in ref_node.children if n.is_part_of_translation_unit() and n.ast_type == InclusionDirective),
+            (
+                n.offset
+                for n in ref_node.children
+                if n.is_part_of_translation_unit() and n.parser_kind in {"InclusionDirective", "INCLUSION_DIRECTIVE"}
+            ),
             default=0,
         )
 
@@ -46,8 +51,13 @@ def derive_header_text(language: str, ref_node: ASTNode | None):
             n.text + ";"
             for n in ref_node.children
             if n.is_part_of_translation_unit()
-            and isinstance(n.ast_type(), (FunctionDef, VariableDef | TypedefDef, MacroDef))
-            and len(find_ast_type(n, CompoundStatement)) == 0
+            and (
+                has_clang_semantic_kind(n, SemanticKind.FUNCTION)
+                or has_clang_semantic_kind(n, SemanticKind.DECLARATION)
+                or has_clang_semantic_kind(n, SemanticKind.DEFINITION)
+                or is_clang_macro_definition(n)
+            )
+            and len(find_nodes(n, is_clang_compound_statement)) == 0
         )
         # and isinstance(n.ast_type, (Declaration, MacroDefinition))
         # and len(find_ast_type(n, CompoundStatement)) == 0
