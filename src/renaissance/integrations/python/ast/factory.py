@@ -13,7 +13,8 @@ from renaissance.integrations.python.ast.rst_node import PythonRstNode
 from renaissance.integrations.tree_sitter.adapter import TreeSitterAdapter
 from renaissance.integrations.tree_sitter.lst import LSTNode
 from renaissance.integrations.types import Arg, DeclarationExpression, ExpressionStatement, MatchAll, MatchOne, Name, Type
-from renaissance.syntax_tree.match_finder import AstProtocol, is_match
+from renaissance.syntax_tree.match_finder import is_match
+from renaissance.syntax_tree.node_protocol import NodeProtocol
 from renaissance.utils.ast_utils import replace_dollar, use_dollar
 
 _MATCH_ALL_RE = re.compile(r"^" + re.escape(MATCH_ALL) + r"\w+$")
@@ -22,7 +23,7 @@ _MATCH_ONE_RE = re.compile(r"^" + re.escape(MATCH_ONE) + r"\w+$")
 SHOW_NODE = False
 
 
-class PythonPattern(AstProtocol):
+class PythonPattern(NodeProtocol):
     def __init__(self, node):
         self.node: PythonRstNode = node
         if type(node) is str:
@@ -38,7 +39,7 @@ class PythonPattern(AstProtocol):
         else:
             self.name = ""
 
-    def __eq__(self, other: AstProtocol) -> bool:
+    def __eq__(self, other: NodeProtocol) -> bool:
         return is_match(other, self)
 
     def __repr__(self):
