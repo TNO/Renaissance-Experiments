@@ -18,7 +18,7 @@ dependencies = [
     "textx==4.4.0",
     "dataclasses-json==0.6.7",
     "pyperclip>=1.8",
-    "clang==18.1.8",
+    "clang==21.1.7",
     "libclang==18.1.1",
     "more-itertools>=10.0",
     "networkx>=3.0",
