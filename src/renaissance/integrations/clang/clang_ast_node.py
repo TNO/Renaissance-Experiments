@@ -9,6 +9,7 @@ from clang.cindex import Config, CursorKind, Index, TypeKind
 from clang.cindex import TranslationUnit as ClangCindexTranslationUnit
 
 from renaissance.integrations.clang.cpp_utils import matches_kind
+from renaissance.integrations.clang.kinds import CLANG_KIND_MAP
 from renaissance.integrations.types import (
     KIND_MAP,
     BinaryOperation,
@@ -26,6 +27,7 @@ from renaissance.integrations.types import (
     UnknownType,
 )
 from renaissance.syntax_tree import ASTFinder, ASTNode, ASTReference
+from renaissance.syntax_tree.semantic_kind import SemanticKind
 from renaissance.utils.ast_utils import match_children, match_props
 
 EMPTY_DICT = {}
@@ -127,6 +129,8 @@ class ClangASTNode(ASTNode):
         self._offset = start_offset if start_offset is not None else self.__derive_start_offset()
         self._length = length if length is not None else self.__derive_length()
         self._kind = insert_kind if insert_kind is not None else self.__derive_kind()
+        self.parser_kind = self._kind
+        self.semantic_kind = CLANG_KIND_MAP.get(self.parser_kind, SemanticKind.NODE)
         self.ast_type = KIND_MAP.get(self._kind, UnknownType)
         self.indent = ""
         # TODO: TextUtils.get_indent(self.content, self._offset)

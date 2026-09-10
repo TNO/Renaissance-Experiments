@@ -1,0 +1,27 @@
+from renaissance.syntax_tree.semantic_kind import SemanticKind
+
+CLANG_KIND_MAP = {
+    "TRANSLATION_UNIT": SemanticKind.TRANSLATION_UNIT,
+    "translation_unit": SemanticKind.TRANSLATION_UNIT,
+    "TranslationUnitDecl": SemanticKind.TRANSLATION_UNIT,
+    "FunctionDecl": SemanticKind.FUNCTION,
+    "CXXMethodDecl": SemanticKind.FUNCTION,
+    "CallExpr": SemanticKind.CALL,
+    "DeclRefExpr": SemanticKind.NAME,
+    "IntegerLiteral": SemanticKind.LITERAL,
+    "FloatingLiteral": SemanticKind.LITERAL,
+    "StringLiteral": SemanticKind.LITERAL,
+    "VarDecl": SemanticKind.DECLARATION,
+    "ParmVarDecl": SemanticKind.PARAMETER,
+    "BinaryOperator": SemanticKind.BINARY_OPERATION,
+    "UnaryOperator": SemanticKind.UNARY_OPERATION,
+    "IfStmt": SemanticKind.CONDITIONAL,
+    "ForStmt": SemanticKind.LOOP,
+    "WhileStmt": SemanticKind.LOOP,
+    "ReturnStmt": SemanticKind.RETURN,
+    "RecordDecl": SemanticKind.CLASS,
+    "CXXRecordDecl": SemanticKind.CLASS,
+    "NamespaceDecl": SemanticKind.DEFINITION,
+    "CompoundStmt": SemanticKind.STATEMENT,
+    "Import": SemanticKind.IMPORT,
+}

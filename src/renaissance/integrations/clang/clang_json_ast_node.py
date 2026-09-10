@@ -11,6 +11,7 @@ from pathlib import Path
 from typing import Any, Self, override
 
 from renaissance.integrations.clang.cpp_utils import CPPUtils, matches_kind
+from renaissance.integrations.clang.kinds import CLANG_KIND_MAP
 from renaissance.integrations.types import (
     KIND_MAP,
     Call,
@@ -30,6 +31,7 @@ from renaissance.integrations.types import (
     UnknownType,
 )
 from renaissance.syntax_tree import ASTNode, ASTReference
+from renaissance.syntax_tree.semantic_kind import SemanticKind
 from renaissance.utils.ast_utils import match_children, match_props
 
 EMPTY_DICT = {}
@@ -114,6 +116,8 @@ class ClangJsonASTNode(ASTNode):
         self._end_offset = self._offset + length if length is not None else self.__derive_end_offset()
         self._length = self._end_offset - self._offset
         self._kind = insert_kind if insert_kind is not None else self.__derive_kind()
+        self.parser_kind = self._kind
+        self.semantic_kind = CLANG_KIND_MAP.get(self.parser_kind, SemanticKind.NODE)
         self.ast_type = KIND_MAP.get(self._kind, UnknownType)
         self._name = insert_name if insert_name is not None else self._derive_name()
         # a fake child is introduced to handle the case where the type of declaration is not found
