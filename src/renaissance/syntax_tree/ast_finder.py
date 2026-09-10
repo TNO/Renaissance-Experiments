@@ -60,6 +60,10 @@ def find_nodes(ast_node: NodeProtocol, predicate) -> Sequence[NodeProtocol]:
     return [node for node in traverse(ast_node) if predicate(node)]
 
 
+def matches_node(ast_node: NodeProtocol, predicate) -> bool:
+    return predicate(ast_node)
+
+
 def find_ast_type(ast_node: NodeProtocol, kind) -> Sequence:
     return find_nodes(ast_node, lambda node: isinstance(node.ast_type(), kind))
 

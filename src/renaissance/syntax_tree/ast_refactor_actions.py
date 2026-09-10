@@ -4,13 +4,19 @@ from typing import TYPE_CHECKING
 
 from renaissance.integrations.types import BogusType, Type
 
-from .ast_finder import ASTFinder, matches_kind
+from .ast_finder import ASTFinder, matches_kind, matches_node
 from .ast_node import ASTNode
 from .ast_processor import ASTProcessor
 from .match_finder import MatchFinder, PatternMatch
 
 if TYPE_CHECKING:
     from renaissance.integrations.clang.c_pattern_factory import CPPPatternFactory
+
+
+def _kind_predicate(kind):
+    if callable(kind) and not isinstance(kind, type):
+        return kind
+    return lambda node: matches_kind(node, kind)
 
 
 class ASTRefactorActions:
@@ -20,8 +26,10 @@ class ASTRefactorActions:
         self.replaced: set[int] = set()
 
     def replace_expr(self, name: str, replacement: str, kind: type[Type]):
+        kind_predicate = _kind_predicate(kind)
+
         def test(n: ASTNode):
-            if (kind and matches_kind(n, kind)) and n.name == name:
+            if (kind and matches_node(n, kind_predicate)) and n.name == name:
                 yield n
 
         [self.processor.replace(found.text.replace(found.name, replacement, 1), found) for found in self.processor.find_all(test)]
@@ -33,10 +41,13 @@ class ASTRefactorActions:
         kind: type[Type] = None,
         skip_kind: type[Type] = BogusType,
     ):
+        kind_predicate = _kind_predicate(kind)
+        skip_kind_predicate = _kind_predicate(skip_kind)
+
         def matches_name(n1: ASTNode) -> bool:
             return (
-                (not kind or ASTFinder.matches_kind(n1, kind))
-                and (not skip_kind or not ASTFinder.matches_kind(n1, skip_kind))
+                (not kind or matches_node(n1, kind_predicate))
+                and (not skip_kind or not matches_node(n1, skip_kind_predicate))
                 and n1
                 and n1.name == name
             )
@@ -53,10 +64,13 @@ class ASTRefactorActions:
         kind: type[Type] = None,
         skip_kind: type[Type] = BogusType,
     ):
+        kind_predicate = _kind_predicate(kind)
+        skip_kind_predicate = _kind_predicate(skip_kind)
+
         def matches_text(n: ASTNode) -> bool:
             return (
-                (not kind or ASTFinder.matches_kind(n, kind))
-                and (not skip_kind or not ASTFinder.matches_kind(n, skip_kind))
+                (not kind or matches_node(n, kind_predicate))
+                and (not skip_kind or not matches_node(n, skip_kind_predicate))
                 and n is not None
                 and n.text == text
             )
