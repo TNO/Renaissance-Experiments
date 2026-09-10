@@ -10,18 +10,8 @@ from clang.cindex import TranslationUnit as ClangCindexTranslationUnit
 
 from renaissance.integrations.clang.cpp_utils import matches_node_kind
 from renaissance.integrations.clang.kinds import CLANG_KIND_MAP
-from renaissance.integrations.types import (
-    KIND_MAP,
-    CompoundStatement,
-    Declaration,
-    Definition,
-    MacroDef,
-    MatchAll,
-    MatchOne,
-    Statement,
-    TranslationUnit,
-    UnknownType,
-)
+from renaissance.integrations.clang.predicates import is_clang_compound_statement, is_clang_macro_definition
+from renaissance.integrations.types import MatchAll, MatchOne
 from renaissance.syntax_tree import ASTFinder, ASTNode, ASTReference
 from renaissance.syntax_tree.pattern_kind import PatternKind
 from renaissance.syntax_tree.semantic_kind import SemanticKind
@@ -132,7 +122,6 @@ class ClangASTNode(ASTNode):
             "MatchOne": PatternKind.MATCH_ONE,
             "MatchAll": PatternKind.MATCH_ALL,
         }.get(self.parser_kind)
-        self.ast_type = KIND_MAP.get(self._kind, UnknownType)
         self.indent = ""
         # TODO: TextUtils.get_indent(self.content, self._offset)
         # an fake child is introduced to handle the case where the type of a declaration is not found
@@ -279,8 +268,10 @@ class ClangASTNode(ASTNode):
             end_offset = self._offset + self._length
             if (
                 (not self._is_statement_or_declaration())
-                and (self.parent and self.parent.ast_type in [CompoundStatement, TranslationUnit])
-                and self.ast_type not in [MacroDef]
+                and (
+                    self.parent and (is_clang_compound_statement(self.parent) or self.parent.semantic_kind is SemanticKind.TRANSLATION_UNIT)
+                )
+                and not is_clang_macro_definition(self)
             ):
                 content = self.root.binary_file_content()
                 while end_offset < len(content) and content[end_offset - 1] not in b";":
@@ -290,7 +281,18 @@ class ClangASTNode(ASTNode):
             return 0
 
     def _is_statement_or_declaration(self):
-        return isinstance(self.ast_type(), (Statement, Declaration, Definition))
+        return self.semantic_kind in {
+            SemanticKind.STATEMENT,
+            SemanticKind.DECLARATION,
+            SemanticKind.DEFINITION,
+            SemanticKind.FUNCTION,
+            SemanticKind.CLASS,
+            SemanticKind.CONDITIONAL,
+            SemanticKind.LOOP,
+            SemanticKind.RETURN,
+            SemanticKind.IMPORT,
+            SemanticKind.TRANSLATION_UNIT,
+        }
 
     @override
     def matches_kind(self, node: ASTNode) -> bool:
@@ -345,7 +347,9 @@ class ClangASTNode(ASTNode):
     @property
     def is_statement(self) -> bool:
         """Pretty good definition."""
-        return self.parent is not None and self.parent.ast_type in [CompoundStatement, TranslationUnit]
+        return self.parent is not None and (
+            is_clang_compound_statement(self.parent) or self.parent.semantic_kind is SemanticKind.TRANSLATION_UNIT
+        )
 
     @override
     @property
