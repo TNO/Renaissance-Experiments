@@ -9,6 +9,7 @@ class SemanticKind(StrEnum):
     DECLARATION = "declaration"
     DEFINITION = "definition"
     NAME = "name"
+    ATTRIBUTE = "attribute"
     LITERAL = "literal"
     CALL = "call"
     FUNCTION = "function"

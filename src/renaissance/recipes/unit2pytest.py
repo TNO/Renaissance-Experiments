@@ -3,11 +3,11 @@ from collections.abc import Sequence
 from pathlib import Path
 
 from renaissance.integrations.python.ast.util import convert_function
-from renaissance.integrations.types import Attribute, ClassDef, FormattedString, FunctionDef, Literal, Number
 from renaissance.recipes.python_refactoring import PythonRefactoring
 from renaissance.syntax_tree import PatternMatch
-from renaissance.syntax_tree.ast_finder import find_ast_type
+from renaissance.syntax_tree.ast_finder import find_semantic_kind
 from renaissance.syntax_tree.match_finder import AstProtocol, match_pattern
+from renaissance.syntax_tree.semantic_kind import SemanticKind
 
 
 class Unit2Pytest(PythonRefactoring):
@@ -123,7 +123,7 @@ class Unit2Pytest(PythonRefactoring):
             self.replace(repl, match.nodes, False, False)
 
     def is_swapped(self, match: PatternMatch) -> bool:
-        return match.expansions["$exp"][0].ast_type in [Literal, FormattedString, Number]
+        return match.expansions["$exp"][0].semantic_kind is SemanticKind.LITERAL
 
     def convert_parameterized_test(self):
         unittest = self.pattern_factory.create_statements(
@@ -171,7 +171,7 @@ class Unit2Pytest(PythonRefactoring):
             self.replace(repl, match.nodes, False, False)
 
     def convert_skip_test(self):
-        nodes = find_ast_type(self.root, Attribute)
+        nodes = find_semantic_kind(self.root, SemanticKind.ATTRIBUTE)
         for node in nodes:
             if node.signature == "unittest.skip":
                 self.replace("pytest.mark.skip", node, False, False)
@@ -187,8 +187,8 @@ class Unit2Pytest(PythonRefactoring):
                 self.replace(repl, match.nodes, False, False)
 
     def restructure_module(self):
-        funs = [stmt for stmt in self.body if stmt.ast_type == FunctionDef]
-        test_classes = [stmt for stmt in self.body if stmt.ast_type == ClassDef and stmt.name.startswith("Test")]
+        funs = [stmt for stmt in self.body if stmt.semantic_kind is SemanticKind.FUNCTION]
+        test_classes = [stmt for stmt in self.body if stmt.semantic_kind is SemanticKind.CLASS and stmt.name.startswith("Test")]
         if len(funs) == 0:
             return
         if len(test_classes) == 0:
