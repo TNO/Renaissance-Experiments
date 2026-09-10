@@ -8,7 +8,7 @@ import clang.native
 from clang.cindex import Config, CursorKind, Index, TypeKind
 from clang.cindex import TranslationUnit as ClangCindexTranslationUnit
 
-from renaissance.integrations.clang.cpp_utils import matches_kind
+from renaissance.integrations.clang.cpp_utils import matches_node_kind
 from renaissance.integrations.clang.kinds import CLANG_KIND_MAP
 from renaissance.integrations.types import (
     KIND_MAP,
@@ -295,7 +295,7 @@ class ClangASTNode(ASTNode):
 
     @override
     def matches_kind(self, node: ASTNode) -> bool:
-        return matches_kind(self.ast_type, node.ast_type)
+        return matches_node_kind(self, node)
 
     def _derive_properties(self) -> dict[str, int | str]:
         result = {}

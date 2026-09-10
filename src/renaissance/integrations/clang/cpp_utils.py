@@ -18,6 +18,16 @@ def matches_kind(mine, other) -> bool:
     )
 
 
+def matches_node_kind(mine, other) -> bool:
+    if mine.semantic_kind.value != "node" and other.semantic_kind.value != "node":
+        return mine.semantic_kind is other.semantic_kind
+    return matches_kind(mine.ast_type, other.ast_type)
+
+
+def is_clang_kind(node, *parser_kinds: str) -> bool:
+    return node.parser_kind in parser_kinds
+
+
 class CPPUtils:
     # a set of cpp reserved keywords in reverse alphabetical order:
     RESERVED_KEYWORDS = {

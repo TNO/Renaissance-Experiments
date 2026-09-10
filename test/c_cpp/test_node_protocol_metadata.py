@@ -1,6 +1,7 @@
 from pathlib import Path
 
 from renaissance.integrations.clang.clang_json_ast_node import ClangJsonASTNode
+from renaissance.integrations.clang.cpp_utils import is_clang_kind
 from renaissance.integrations.clang.kinds import CLANG_KIND_MAP
 from renaissance.syntax_tree.semantic_kind import SemanticKind
 
@@ -24,3 +25,10 @@ def test_clang_specific_unknown_kinds_keep_parser_identity():
 
     assert parser_kind not in CLANG_KIND_MAP
     assert CLANG_KIND_MAP.get(parser_kind, SemanticKind.NODE) is SemanticKind.NODE
+
+
+def test_clang_parser_kind_predicate_preserves_specific_concepts():
+    node = type("Node", (), {"parser_kind": "CXXConstructorDecl"})()
+
+    assert is_clang_kind(node, "CXXConstructorDecl")
+    assert not is_clang_kind(node, "FunctionDecl")

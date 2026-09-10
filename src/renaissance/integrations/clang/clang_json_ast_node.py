@@ -10,7 +10,7 @@ from functools import cache
 from pathlib import Path
 from typing import Any, Self, override
 
-from renaissance.integrations.clang.cpp_utils import CPPUtils, matches_kind
+from renaissance.integrations.clang.cpp_utils import CPPUtils, matches_node_kind
 from renaissance.integrations.clang.kinds import CLANG_KIND_MAP
 from renaissance.integrations.types import (
     KIND_MAP,
@@ -321,7 +321,7 @@ class ClangJsonASTNode(ASTNode):
     @override
     @property
     def matches_kind(self, node: ASTNode) -> bool:
-        return matches_kind(self.ast_type, node.ast_type)
+        return matches_node_kind(self, node)
 
     @override
     @property
