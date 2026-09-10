@@ -132,7 +132,7 @@ Negative:
 
 - See ADR 12 (Patterns are not nodes) for the `Pattern` / `SyntacticKind` design used by the pattern
   factory.
-- See ADR 10 (Type hierarchy) for the node kind taxonomy referenced by find-by-kind functionality.
+- See ADR 03 (Duck typing for nodes) for the protocol-based node shape and shared semantic kinds.
 - See ADR 08 (Test architecture) for the test requirements that cover matching, placeholders, and
   equivalent-code matching.
 - See ADR 11 (Parser with space and comment) for the lossless round-trip required by transformation tests.
