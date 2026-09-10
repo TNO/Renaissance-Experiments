@@ -33,6 +33,9 @@ For simplicity, we have decided that
 
 Note that removing two overlapping sequences of nodes is treated the same as replacing them and thus considered an impossible change.
 
+Combining changes on nodes from different roots is also an impossible change - see
+[Position consistency](position-consistency.md) for why this is rejected rather than applied.
+
 ## Repeated changes
 
 In the collected changes, the same changes might occur more than once.

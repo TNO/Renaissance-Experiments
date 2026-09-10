@@ -644,6 +644,7 @@ def get_change_comment(date=None):
     description = "Add assert_raises method to Asserter class."
 
     # When no date provided, use today
-    formatted_date = datetime.now() if date is None else datetime.strptime(date, "%m-%d-%Y")
+    tz = datetime.UTC
+    formatted_date = datetime.now(tz) if date is None else datetime.strptime(date, "%m-%d-%Y").astimezone(tz)
 
     return f"# {formatted_date.strftime('%m-%d-%Y')} : {change_id} SBYN {description}"

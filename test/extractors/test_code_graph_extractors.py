@@ -63,7 +63,7 @@ class TestBaseCodeGraphExtractor:
     def test_save_graph_writes_file(self, tmp_path, mocker):
         with patch("renaissance.integrations.tree_sitter.adapter.TreeSitterAdapter"):
             extractor = PythonCodeGraphExtractor("python", tree_sitter_python)
-            mock_write = mocker.patch("renaissance.integrations.tree_sitter.extractor.networkx.write_graphml")
+            mock_write = mocker.patch("renaissance.integrations.tree_sitter.extractor.nx.write_graphml")
             mocker.patch("renaissance.integrations.tree_sitter.extractor.GRAPHML_DIR", str(tmp_path))
 
             extractor.save_graph("test.graphml")

@@ -140,6 +140,7 @@ nav:
 
   - Developer documentation:
       - Overview: developer/index.md
+      - Coding conventions: developer/coding-conventions.md
 
       - Architecture:
           - Overview: developer/architecture/index.md
@@ -151,6 +152,7 @@ nav:
           - Filter: developer/architecture/filter.md
           - Modify: developer/architecture/modify.md
           - Rewrite semantics: developer/architecture/rewrite-semantics.md
+          - Position consistency: developer/architecture/position-consistency.md
           - Standard analyses and transformations: developer/architecture/standard-libraries.md
           - Architecture images: developer/architecture/images/README.md
           - Test architecture: developer/architecture/test-architecture.md

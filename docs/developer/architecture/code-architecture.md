@@ -32,7 +32,9 @@
 1. AST Nodes are read only and immutable.
 
 1. AST Nodes are navigable, so parent must be present (except for the ATU / top node) and
-   children are always present (although it might be an empty list).
+   children are always present (although it might be an empty list). The root reachable via
+   `parent` is also used to guarantee that the rewriter and the parser agree on node positions,
+   see [Position consistency](position-consistency.md).
 
 1. Standard 'semantic' functions must be provided that when given a code snippet will return
    the variables read or written.

@@ -120,9 +120,9 @@ class ClangJsonASTNode(ASTNode):
         # for example in the case of a base type.
         # without the fake child pattern matching on types will be difficult
         self.__inserted_children: list[ClangJsonASTNode] = []
-        type = self.node.get("type")
-        if insert_kind is None and type and not self.node.get("implicit") and re.fullmatch("(Var|Function|CxxMethod)Decl", self._kind):
-            declared_type = type["qualType"].replace("(", "").replace(")", "").strip()
+        node_type = self.node.get("type")
+        if insert_kind is None and node_type and not self.node.get("implicit") and re.fullmatch("(Var|Function|CxxMethod)Decl", self._kind):
+            declared_type = node_type["qualType"].replace("(", "").replace(")", "").strip()
             if self.node.get("loc"):
                 loc = self.node["loc"]
                 offset = loc["offset"] if loc.get("offset") else self._get(["loc", "expansionLoc", "offset"], 0)
@@ -140,7 +140,7 @@ class ClangJsonASTNode(ASTNode):
                     self.__inserted_children.append(insert_child)
             if "TypeRef" not in [inner["kind"] for inner in self.node.get("inner", [])]:
                 # deep clone the type node and remove the parentheses
-                base_type = type.get("desugaredQualType", declared_type).replace("(", "").replace(")", "").strip()
+                base_type = node_type.get("desugaredQualType", declared_type).replace("(", "").replace(")", "").strip()
                 if base_type in CPPUtils.RESERVED_KEYWORDS:
                     length_ref = len(declared_type.encode(sys.getdefaultencoding()))
                     insert_child = ClangJsonASTNode(
@@ -204,21 +204,20 @@ class ClangJsonASTNode(ASTNode):
             if code:
                 if str(file_path) in command:
                     command.remove(str(file_path))
-                compile = "-xc++" if file_path.suffix == ".cpp" else "-xc"
-                if compile not in command:
-                    command.append(compile)
+                compile_flag = "-xc++" if file_path.suffix == ".cpp" else "-xc"
+                if compile_flag not in command:
+                    command.append(compile_flag)
                 if "-" not in command:
                     command.append("-")
                 # command.append('-main-file-name=' + str(file_path))
-                input = code
                 result = subprocess.run(
                     command,
-                    input=input,
+                    input=code,
                     capture_output=True,
                     text=True,
                     cwd=working_dir,
                 )
-                length = len(input)
+                length = len(code)
             else:
                 if str(file_path) not in command:
                     command.append(str(file_path))
@@ -580,12 +579,12 @@ class ReferenceHelper:
             else:
                 namespaces = []
             qual_type = tp["qualType"]
-            ids = []
+            node_ids = []
             ctor_type = EMPTY_STR
             if ast_node.ast_type == ConstructorExpression:
                 ctor_type = ast_node._get(["ctorType", "qualType"], EMPTY_STR)
 
-            for id, node in ast_node.translation_unit._nodes.items():
+            for node_id, node in ast_node.translation_unit._nodes.items():
                 if node.ast_type == RecordDef and node.name == qual_type:
                     parent = node.parent
                     matches = True
@@ -594,13 +593,13 @@ class ReferenceHelper:
                             matches = False
                         parent = parent.parent
                     if matches:
-                        ids.append((node.ast_type, id))
+                        node_ids.append((node.ast_type, node_id))
                 if ctor_type != EMPTY_STR and node.ast_type == Constructor:
                     # link all matching
                     matches = node._get(["type", "qualType"], EMPTY_STR) == ctor_type
                     if matches:
-                        ids.append((node.ast_type, id))
-            return ids
+                        node_ids.append((node.ast_type, node_id))
+            return node_ids
         except Exception:
             pass
         return []
