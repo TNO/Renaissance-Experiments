@@ -12,7 +12,6 @@ from renaissance.integrations.python.ast.cst_node import PythonCstNode
 from renaissance.integrations.python.ast.rst_node import PythonRstNode
 from renaissance.integrations.tree_sitter.adapter import TreeSitterAdapter
 from renaissance.integrations.tree_sitter.lst import LSTNode
-from renaissance.integrations.types import Arg, DeclarationExpression, ExpressionStatement, Name, Type
 from renaissance.syntax_tree.match_finder import is_match
 from renaissance.syntax_tree.node_protocol import NodeProtocol
 from renaissance.syntax_tree.pattern_kind import PatternKind
@@ -33,7 +32,7 @@ class PythonPattern(NodeProtocol):
         self.parser_kind = getattr(node, "parser_kind", type(node).__name__)
         self.semantic_kind = getattr(node, "semantic_kind", None)
         self.pattern_kind = None
-        self.ast_type: Type = self.derive_type(node)
+        self.ast_type = self.derive_type(node)
 
         self.properties: dict = node.properties
         self.children: list[PythonPattern] = [PythonPattern(node) for node in node.children]
@@ -76,7 +75,7 @@ class PythonPattern(NodeProtocol):
         else:
             signature = node.name
 
-        if node.ast_type in [DeclarationExpression, ExpressionStatement, Name, Arg]:
+        if node.parser_kind in {"Name", "Expr", "arg", "Param"}:
             if _MATCH_ALL_RE.match(signature):
                 self.pattern_kind = PatternKind.MATCH_ALL
                 return node.ast_type
