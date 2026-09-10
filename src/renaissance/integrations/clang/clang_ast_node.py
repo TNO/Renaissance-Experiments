@@ -27,6 +27,7 @@ from renaissance.integrations.types import (
     UnknownType,
 )
 from renaissance.syntax_tree import ASTFinder, ASTNode, ASTReference
+from renaissance.syntax_tree.pattern_kind import PatternKind
 from renaissance.syntax_tree.semantic_kind import SemanticKind
 from renaissance.utils.ast_utils import match_children, match_props
 
@@ -131,6 +132,10 @@ class ClangASTNode(ASTNode):
         self._kind = insert_kind if insert_kind is not None else self.__derive_kind()
         self.parser_kind = self._kind
         self.semantic_kind = CLANG_KIND_MAP.get(self.parser_kind, SemanticKind.NODE)
+        self.pattern_kind = {
+            "MatchOne": PatternKind.MATCH_ONE,
+            "MatchAll": PatternKind.MATCH_ALL,
+        }.get(self.parser_kind)
         self.ast_type = KIND_MAP.get(self._kind, UnknownType)
         self.indent = ""
         # TODO: TextUtils.get_indent(self.content, self._offset)
@@ -443,9 +448,9 @@ class ClangASTNode(ASTNode):
                 return str(self.node.kind.name)
             if self.node.kind.name in ["UNEXPOSED_EXPR", "VAR_DECL", "DECL_REF_EXPR"]:
                 if self.node.displayname.startswith("$$") and " " not in self.node.displayname:
-                    return MatchAll.__name__
+                    return "MatchAll"
                 if self.node.displayname.startswith("$") and " " not in self.node.displayname:
-                    return MatchOne.__name__
+                    return "MatchOne"
             return str(self.node.kind.name)
         except Exception:
             return EMPTY_STR

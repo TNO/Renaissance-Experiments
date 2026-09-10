@@ -6,7 +6,7 @@ from hamcrest import assert_that, empty, greater_than, has_length, instance_of, 
 
 from renaissance.integrations.python.ast.factory import PythonFactory, PythonPatternFactory
 from renaissance.integrations.python.ast.rst_node import PythonRstNode
-from renaissance.integrations.types import ExpressionStatement, MatchOne
+from renaissance.integrations.types import ExpressionStatement
 from renaissance.syntax_tree import MatchFinder
 from renaissance.syntax_tree.match_finder import (
     find_variants,
@@ -14,6 +14,7 @@ from renaissance.syntax_tree.match_finder import (
     match_pattern,
     variant_in_match_stmt,
 )
+from renaissance.syntax_tree.pattern_kind import PatternKind
 
 
 class TestPythonMatcher:
@@ -109,7 +110,7 @@ class TestPythonMatcher:
     def test_generic_is_match_any_assignment(self):
         atu = self.factory.create_from_text("na=55", "test.py")
         simple = self.pattern_factory.create_statement("$pa")
-        assert_that(simple.ast_type(), instance_of(MatchOne))
+        assert_that(simple.pattern_kind, is_(PatternKind.MATCH_ONE))
         assert_that(is_match(atu.children[0], simple, {}), is_(True))
 
     def test_match_multiple_single_stmt(self):

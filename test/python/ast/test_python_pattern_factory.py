@@ -29,6 +29,7 @@ from renaissance.integrations.types import (
     With,
 )
 from renaissance.syntax_tree.match_finder import match_pattern
+from renaissance.syntax_tree.pattern_kind import PatternKind
 
 
 class TestPythonFactory:
@@ -299,7 +300,7 @@ class TestPythonFactory:
     def test_function_with_multi_patterns(self):
         pattern = self.pattern_factory.create_expression("$f($$before, $a, $$after)")
         assert_that(pattern.ast_type(), Call)
-        assert_that(pattern.children[0].ast_type(), is_(MatchOne))
-        assert_that(pattern.children[1].children[0].ast_type(), is_(MatchAll))
-        assert_that(pattern.children[1].children[1].ast_type(), is_(MatchOne))
-        assert_that(pattern.children[1].children[2].ast_type(), is_(MatchAll))
+        assert_that(pattern.children[0].pattern_kind, is_(PatternKind.MATCH_ONE))
+        assert_that(pattern.children[1].children[0].pattern_kind, is_(PatternKind.MATCH_ALL))
+        assert_that(pattern.children[1].children[1].pattern_kind, is_(PatternKind.MATCH_ONE))
+        assert_that(pattern.children[1].children[2].pattern_kind, is_(PatternKind.MATCH_ALL))

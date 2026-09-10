@@ -1,7 +1,6 @@
 from collections.abc import Iterable, Sequence
 from typing import Self
 
-from renaissance.integrations.types import MatchAll, MatchOne
 from renaissance.utils.ast_utils import use_dollar
 
 from .node_protocol import AstProtocol as AstProtocol
@@ -20,9 +19,10 @@ def pattern_kind(node: NodeProtocol) -> PatternKind | None:
     value = getattr(node, "pattern_kind", None)
     if value is not None:
         return value
-    if node.ast_type == MatchOne:
+    legacy_kind = getattr(node.ast_type, "__name__", "")
+    if legacy_kind == "MatchOne":
         return PatternKind.MATCH_ONE
-    if node.ast_type == MatchAll:
+    if legacy_kind == "MatchAll":
         return PatternKind.MATCH_ALL
     return None
 

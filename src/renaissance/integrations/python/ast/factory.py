@@ -12,7 +12,7 @@ from renaissance.integrations.python.ast.cst_node import PythonCstNode
 from renaissance.integrations.python.ast.rst_node import PythonRstNode
 from renaissance.integrations.tree_sitter.adapter import TreeSitterAdapter
 from renaissance.integrations.tree_sitter.lst import LSTNode
-from renaissance.integrations.types import Arg, DeclarationExpression, ExpressionStatement, MatchAll, MatchOne, Name, Type
+from renaissance.integrations.types import Arg, DeclarationExpression, ExpressionStatement, Name, Type
 from renaissance.syntax_tree.match_finder import is_match
 from renaissance.syntax_tree.node_protocol import NodeProtocol
 from renaissance.syntax_tree.pattern_kind import PatternKind
@@ -79,10 +79,10 @@ class PythonPattern(NodeProtocol):
         if node.ast_type in [DeclarationExpression, ExpressionStatement, Name, Arg]:
             if _MATCH_ALL_RE.match(signature):
                 self.pattern_kind = PatternKind.MATCH_ALL
-                return MatchAll
+                return node.ast_type
             if _MATCH_ONE_RE.match(signature):
                 self.pattern_kind = PatternKind.MATCH_ONE
-                return MatchOne
+                return node.ast_type
 
         return node.ast_type
 

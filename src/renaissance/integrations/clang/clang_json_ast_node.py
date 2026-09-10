@@ -31,6 +31,7 @@ from renaissance.integrations.types import (
     UnknownType,
 )
 from renaissance.syntax_tree import ASTNode, ASTReference
+from renaissance.syntax_tree.pattern_kind import PatternKind
 from renaissance.syntax_tree.semantic_kind import SemanticKind
 from renaissance.utils.ast_utils import match_children, match_props
 
@@ -118,6 +119,10 @@ class ClangJsonASTNode(ASTNode):
         self._kind = insert_kind if insert_kind is not None else self.__derive_kind()
         self.parser_kind = self._kind
         self.semantic_kind = CLANG_KIND_MAP.get(self.parser_kind, SemanticKind.NODE)
+        self.pattern_kind = {
+            "MatchOne": PatternKind.MATCH_ONE,
+            "MatchAll": PatternKind.MATCH_ALL,
+        }.get(self.parser_kind)
         self.ast_type = KIND_MAP.get(self._kind, UnknownType)
         self._name = insert_name if insert_name is not None else self._derive_name()
         # a fake child is introduced to handle the case where the type of declaration is not found
@@ -164,9 +169,11 @@ class ClangJsonASTNode(ASTNode):
             if self.name.startswith("$$"):
                 self._kind = MatchAll.__name__
                 self.ast_type = MatchAll
+                self.pattern_kind = PatternKind.MATCH_ALL
             elif self.name.startswith("$"):
                 self._kind = MatchOne.__name__
                 self.ast_type = MatchOne
+                self.pattern_kind = PatternKind.MATCH_ONE
         self._children = self.__inserted_children + [
             ClangJsonASTNode(
                 ClangJsonASTNode._remove_wrapper(n),
