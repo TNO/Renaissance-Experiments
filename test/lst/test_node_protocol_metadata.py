@@ -20,4 +20,4 @@ def test_tree_sitter_kind_key_preserves_unknown_parser_identity():
     root = adapter.to_lst("x = 1\n", parsed).root
 
     assert root.kind_key is SemanticKind.TRANSLATION_UNIT
-    assert root.children[0].kind_key == "expression_statement"
+    assert root.children[0].kind_key is SemanticKind.EXPRESSION

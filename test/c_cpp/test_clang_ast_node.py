@@ -99,7 +99,7 @@ class TestClangAstNode:
         assert_that(
             src.children[3],
             has_string(
-                "(STRUCT_DECL, struct A_Struct, test.c[88:153]):\n    |struct A_Struct{|\n    |            int a;|\n"
+                "(class, struct A_Struct, test.c[88:153]):\n    |struct A_Struct{|\n    |            int a;|\n"
                 "    |            int b;|\n    |        };|\n",
             ),
         )
