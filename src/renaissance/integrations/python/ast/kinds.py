@@ -1,5 +1,30 @@
 from renaissance.syntax_tree.semantic_kind import SemanticKind
 
+PYTHON_OPERATOR_MAP = {
+    "AnnAssign": "=",
+    "Assert": "assert",
+    "Assign": "=",
+    "AsyncFor": "for",
+    "AsyncFunctionDef": "function",
+    "AsyncWith": "with",
+    "AugAssignAdd": "+=",
+    "Break": "break",
+    "Call": "def",
+    "ClassDef": "class",
+    "Continue": "continue",
+    "For": "for",
+    "FunctionDef": "function",
+    "If": "if",
+    "Import": "import",
+    "ImportFrom": "import",
+    "Match": "match",
+    "Pass": "pass",
+    "Try": "try",
+    "TryStar": "try",
+    "While": "while",
+    "With": "with",
+}
+
 PYTHON_KIND_MAP = {
     "Module": SemanticKind.TRANSLATION_UNIT,
     "FunctionDef": SemanticKind.FUNCTION,

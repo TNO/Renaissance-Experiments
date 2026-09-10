@@ -5,9 +5,8 @@ from collections.abc import Callable, Sequence
 from pathlib import Path
 from typing import Any, Self
 
-from renaissance.integrations.python.ast.kinds import PYTHON_KIND_MAP
+from renaissance.integrations.python.ast.kinds import PYTHON_KIND_MAP, PYTHON_OPERATOR_MAP
 from renaissance.integrations.python.ast.util import convert
-from renaissance.integrations.types import OPERATOR_MAP
 from renaissance.syntax_tree.match_finder import find_in_list
 from renaissance.syntax_tree.semantic_kind import SemanticKind
 from renaissance.utils.ast_utils import (
@@ -418,7 +417,7 @@ class PythonRstNode:
     def operator(self):
         node_type = type(self.node).__name__
         op = type(self.node.op).__name__ if isinstance(self.node, (ast.BinOp, ast.UnaryOp, ast.BoolOp, ast.AugAssign)) else ""
-        return OPERATOR_MAP.get(node_type + op, "")
+        return PYTHON_OPERATOR_MAP.get(node_type + op, "")
 
     @property
     def signature(self) -> str:
