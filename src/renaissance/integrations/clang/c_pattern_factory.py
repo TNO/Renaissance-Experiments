@@ -48,8 +48,6 @@ def derive_header_text(language: str, ref_node: ASTNode | None):
             )
             and len(find_nodes(n, is_clang_compound_statement)) == 0
         )
-        # and isinstance(n.ast_type, (Declaration, MacroDefinition))
-        # and len(find_ast_type(n, CompoundStatement)) == 0
         header += "\n"
 
     return header, language
