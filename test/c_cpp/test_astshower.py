@@ -2,9 +2,9 @@ import pytest
 from hamcrest import assert_that, is_, matches_regexp
 
 from renaissance.integrations.clang import ClangASTNode, CPatternFactory
-from renaissance.integrations.types import Call, If, MacroDef
 from renaissance.syntax_tree import ASTFactory, ASTShower
-from renaissance.syntax_tree.ast_finder import find_ast_type
+from renaissance.syntax_tree.ast_finder import find_nodes
+from renaissance.syntax_tree.semantic_kind import SemanticKind
 
 
 class TestCcppShower:
@@ -29,7 +29,7 @@ class TestCcppShower:
         void fff() {
         $pa($xx);
         }""")
-        simple = find_ast_type(pattern, Call)[0]
+        simple = find_nodes(pattern, lambda node: node.semantic_kind is SemanticKind.CALL)[0]
 
         assert_that(
             str(simple),
@@ -129,9 +129,9 @@ else
 """,
             "test.c",
         )
-        real_children = list(filter(lambda n: n.ast_type != MacroDef, atu.children))[1]
+        real_children = list(filter(lambda n: n.parser_kind != "MACRO_DEFINITION", atu.children))[1]
 
-        ifstmt = find_ast_type(real_children, If)[0]
+        ifstmt = find_nodes(real_children, lambda node: node.parser_kind == "IF_STMT")[0]
         ASTShower.show_node(ifstmt)
 
         text = ASTShower.get_node(ifstmt)
