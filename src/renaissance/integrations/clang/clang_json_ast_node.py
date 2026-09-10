@@ -12,17 +12,14 @@ from typing import Any, Self, override
 
 from renaissance.integrations.clang.cpp_utils import CPPUtils, matches_node_kind
 from renaissance.integrations.clang.kinds import CLANG_KIND_MAP
-from renaissance.integrations.clang.predicates import is_clang_declaration_reference, is_clang_kind
+from renaissance.integrations.clang.predicates import (
+    is_clang_declaration_reference,
+    is_clang_kind,
+)
 from renaissance.integrations.types import (
     KIND_MAP,
-    Comment,
-    CompoundStatement,
-    FullComment,
-    MacroDef,
     MatchAll,
     MatchOne,
-    Statement,
-    TranslationUnit,
     UnknownType,
 )
 from renaissance.syntax_tree import ASTNode, ASTReference
@@ -43,9 +40,9 @@ ID_TAGS = [
     *ON_NODE_ID_TAGS,
 ]
 
-STMT_PARENTS = [CompoundStatement, TranslationUnit]
+STMT_PARENT_KINDS = {"CompoundStmt", "COMPOUND_STMT", "TranslationUnitDecl", "TRANSLATION_UNIT", "translation_unit"}
 IRRELEVANT_PROPS = {"macro_expansion", "start_point", "end_point", "source_code", "location", "type"}
-IRRELEVANT_NODES = {Comment, MacroDef, FullComment}
+IRRELEVANT_NODE_KINDS = {"comment", "Comment", "MacroDefinition", "MACRO_DEFINITION", "FullComment"}
 VERBOSE = False
 
 
@@ -178,14 +175,14 @@ class ClangJsonASTNode(ASTNode):
             for n in self.node.get("inner", [])
             if not n.get("isImplicit", False)
         ]
-        self._children = [n for n in self._children if n.ast_type not in IRRELEVANT_NODES]
+        self._children = [n for n in self._children if n.parser_kind not in IRRELEVANT_NODE_KINDS]
 
     def __eq__(self, other):
         return (
             isinstance(other, type(self))
             and self.kind == other.kind
             and match_props(self.properties, other.properties, IRRELEVANT_PROPS)
-            and match_children(self.children, other.children, IRRELEVANT_NODES)
+            and match_children(self.children, other.children, IRRELEVANT_NODE_KINDS)
         )
 
     @override
@@ -299,7 +296,7 @@ class ClangJsonASTNode(ASTNode):
             end_offset = self._end_offset
             # "f(x,y);" and "a = f(3);" that are according to clang NOT statements,
             # but expressions (without the semicolon)
-            if (not self._is_statement_or_declaration()) and (self.parent and self.parent.ast_type in STMT_PARENTS):
+            if (not self._is_statement_or_declaration()) and (self.parent and self.parent.parser_kind in STMT_PARENT_KINDS):
                 content = self.root.binary_file_content()
                 while (
                     end_offset < len(content) and content[end_offset - 1] not in b";"
@@ -311,7 +308,7 @@ class ClangJsonASTNode(ASTNode):
 
     def _is_statement_or_declaration(self):
         return re.match("(?i).*(Stmt|Decl)", self.kind)
-        return isinstance(self.ast_type(), (Statement))
+        return self.semantic_kind in {SemanticKind.STATEMENT, SemanticKind.DECLARATION, SemanticKind.DEFINITION}
 
     @override
     @property
@@ -386,7 +383,7 @@ class ClangJsonASTNode(ASTNode):
     @property
     def is_statement(self) -> bool:
         return (
-            self.parent is not None and self.parent.ast_type in STMT_PARENTS
+            self.parent is not None and self.parent.parser_kind in STMT_PARENT_KINDS
         )  # TODO: Why look at the kind of your parent and not at your own kind?
 
     def _derive_name(self) -> str:
