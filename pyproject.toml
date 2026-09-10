@@ -111,8 +111,8 @@ force-exclude = true
 
 [tool.ruff.lint]
 select = [
-    "A","AIR", "ASYNC", "COM", "DJ", "DTZ", "E", "EXE", 
-    "F", "FA", "FAST", "FLY", "G", "I", "ICN", "INT", "ISC", 
+    "A","AIR", "ASYNC", "COM", "DJ", "DTZ", "E", "EXE",
+    "F", "FA", "FAST", "FLY", "G", "I", "ICN", "INT", "ISC",
     "LOG", "NPY", "PTH", "PD", "PERF", "PIE", "PYI",
     "Q", "RSE", "SIM", "SLOT", "T10", "TID", "UP", "W", "YTT",
 ]
