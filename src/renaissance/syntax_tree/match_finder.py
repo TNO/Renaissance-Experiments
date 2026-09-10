@@ -19,10 +19,9 @@ def pattern_kind(node: NodeProtocol) -> PatternKind | None:
     value = getattr(node, "pattern_kind", None)
     if value is not None:
         return value
-    legacy_kind = getattr(node.ast_type, "__name__", "")
-    if legacy_kind == "MatchOne":
+    if node.parser_kind in {"MatchOne", "_MatchOne__"}:
         return PatternKind.MATCH_ONE
-    if legacy_kind == "MatchAll":
+    if node.parser_kind in {"MatchAll", "_MatchAll__"}:
         return PatternKind.MATCH_ALL
     return None
 
@@ -35,7 +34,7 @@ def node_kinds_match(source: NodeProtocol, pattern: NodeProtocol) -> bool:
         and pattern.semantic_kind is not SemanticKind.NODE
     ):
         return source.semantic_kind == pattern.semantic_kind
-    return source.ast_type == pattern.ast_type
+    return source.parser_kind == pattern.parser_kind
 
 
 class Variant:
