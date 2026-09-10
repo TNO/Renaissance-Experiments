@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING
 
 from renaissance.integrations.types import BogusType, Type
 
-from .ast_finder import ASTFinder, matches_kind, matches_node
+from .ast_finder import matches_kind, matches_node
 from .ast_node import ASTNode
 from .ast_processor import ASTProcessor
 from .match_finder import MatchFinder, PatternMatch
