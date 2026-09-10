@@ -3,7 +3,6 @@ from typing import Self
 
 from renaissance.utils.ast_utils import use_dollar
 
-from .node_protocol import AstProtocol as AstProtocol
 from .node_protocol import NodeProtocol
 from .pattern_kind import PatternKind
 from .semantic_kind import SemanticKind

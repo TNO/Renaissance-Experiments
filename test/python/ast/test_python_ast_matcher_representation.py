@@ -2,7 +2,7 @@ import pytest
 
 from renaissance.integrations.python.ast.factory import PythonFactory, PythonPatternFactory
 from renaissance.integrations.python.ast.rst_node import PythonRstNode
-from renaissance.syntax_tree.match_finder import AstProtocol
+from renaissance.syntax_tree.node_protocol import NodeProtocol
 from utils.util_equivalence_classes import assert_pair_equivalence, make_parametersets_of_equivalence_classes
 
 
@@ -183,7 +183,7 @@ class TestPythonAstMatcherRepresentation:
 
     # a and b have the same type as the union of return types of
     # PATTERN_FACTORY.create_expression and PATTERN_FACTORY.create_statement,
-    # which is AstProtocol.
+    # which is NodeProtocol.
     @pytest.mark.parametrize(
         "a, b, expected",
         make_parametersets_of_equivalence_classes("whole number", PATTERN_FACTORY.create_expression, WHOLE_NUMBER_REPRESENTATIONS)
@@ -193,7 +193,7 @@ class TestPythonAstMatcherRepresentation:
         + make_parametersets_of_equivalence_classes("tuple", PATTERN_FACTORY.create_statement, TUPLE_REPRESENTATIONS)
         + make_parametersets_of_equivalence_classes("equal", PATTERN_FACTORY.create_expression, EQUAL_REPRESENTATIONS),
     )
-    def test_pairs_of_equivalence_classes(self, a: AstProtocol, b: AstProtocol, expected: bool):
+    def test_pairs_of_equivalence_classes(self, a: NodeProtocol, b: NodeProtocol, expected: bool):
         assert_pair_equivalence(a, b, expected)
 
 

@@ -6,7 +6,8 @@ from renaissance.integrations.python.ast.util import convert_function
 from renaissance.recipes.python_refactoring import PythonRefactoring
 from renaissance.syntax_tree import PatternMatch
 from renaissance.syntax_tree.ast_finder import find_semantic_kind
-from renaissance.syntax_tree.match_finder import AstProtocol, match_pattern
+from renaissance.syntax_tree.match_finder import match_pattern
+from renaissance.syntax_tree.node_protocol import NodeProtocol
 from renaissance.syntax_tree.semantic_kind import SemanticKind
 
 
@@ -83,7 +84,7 @@ class Unit2Pytest(PythonRefactoring):
         self.commit()
 
     def convert_test_class(self):
-        test_main: Sequence[AstProtocol] = self.pattern_factory.create_statements(
+        test_main: Sequence[NodeProtocol] = self.pattern_factory.create_statements(
             "class $klass($test_class):\n    $$test_cases\n",
         )  # type: ignore[assignment]
         for match in match_pattern(self.root.children, test_main):
@@ -160,7 +161,7 @@ class Unit2Pytest(PythonRefactoring):
                 self.remove(match.nodes, False, False)
 
     def convert_plain_assert_same_length(self):
-        pattern: Sequence[AstProtocol] = self.pattern_factory.create_statements(
+        pattern: Sequence[NodeProtocol] = self.pattern_factory.create_statements(
             '$act: int = len($real)\nassert $exp == $act, "$act = " + str($act)',
         )
         for match in match_pattern(self.body, pattern):
@@ -177,7 +178,7 @@ class Unit2Pytest(PythonRefactoring):
                 self.replace("pytest.mark.skip", node, False, False)
 
     def swap_expected_and_actual(self):
-        pattern: Sequence[AstProtocol] = self.pattern_factory.create_statements("assert_that($exp, is_($act))")  # type: ignore[assignment]
+        pattern: Sequence[NodeProtocol] = self.pattern_factory.create_statements("assert_that($exp, is_($act))")  # type: ignore[assignment]
         for match in match_pattern(self.root.children, pattern):
             if self.is_swapped(match):
                 repl = "assert_that($act, is_($exp))"
@@ -224,7 +225,7 @@ class Unit2Pytest(PythonRefactoring):
         return name if name.startswith("Test") else f"Test{name}"
 
     def remove_duplicate_import(self, import_str):
-        import_stmt: Sequence[AstProtocol] = self.pattern_factory.create_statements(import_str)  # type: ignore[assignment]
+        import_stmt: Sequence[NodeProtocol] = self.pattern_factory.create_statements(import_str)  # type: ignore[assignment]
         # type: ignore[assignment]
         duplicate_imports = match_pattern(self.body, import_stmt)
 

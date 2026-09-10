@@ -14,6 +14,3 @@ class NodeProtocol(Protocol):
     children: Sequence[Self]
     signature: str
     name: str
-
-
-AstProtocol = NodeProtocol

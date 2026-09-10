@@ -6,7 +6,8 @@ from rejuvenation.descendant_search import find_descendant_match
 from renaissance.integrations.clang import ClangASTNode, CPatternFactory
 from renaissance.integrations.clang.clang_json_ast_node import ClangJsonASTNode
 from renaissance.syntax_tree import ASTFactory
-from renaissance.syntax_tree.match_finder import AstProtocol, is_match, match_pattern
+from renaissance.syntax_tree.match_finder import is_match, match_pattern
+from renaissance.syntax_tree.node_protocol import NodeProtocol
 
 
 class TestFindDescendantMatch:
@@ -89,7 +90,7 @@ class TestBasic:
     @pytest.mark.parametrize("_, factory", Factories.factories)
     def test_is_match_assignment_expression(self, _: str, factory: ASTFactory):
         pattern_factory = CPatternFactory(factory)
-        expression1_pattern: AstProtocol = pattern_factory.create_expression("x=3", ["int x;"])
+        expression1_pattern: NodeProtocol = pattern_factory.create_expression("x=3", ["int x;"])
         assert_that(
             is_match(expression1_pattern, expression1_pattern, {}),
             is_(True),
