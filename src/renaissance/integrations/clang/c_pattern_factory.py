@@ -6,7 +6,6 @@ from more_itertools.more import last
 
 from renaissance.integrations.clang.cpp_utils import CPPUtils
 from renaissance.integrations.clang.predicates import (
-    has_clang_semantic_kind,
     is_clang_compound_statement,
     is_clang_kind,
     is_clang_macro_definition,
@@ -44,9 +43,7 @@ def derive_header_text(language: str, ref_node: ASTNode | None):
             for n in ref_node.children
             if n.is_part_of_translation_unit()
             and (
-                has_clang_semantic_kind(n, SemanticKind.FUNCTION)
-                or has_clang_semantic_kind(n, SemanticKind.DECLARATION)
-                or has_clang_semantic_kind(n, SemanticKind.DEFINITION)
+                n.semantic_kind in {SemanticKind.FUNCTION, SemanticKind.DECLARATION, SemanticKind.DEFINITION}
                 or is_clang_macro_definition(n)
             )
             and len(find_nodes(n, is_clang_compound_statement)) == 0
@@ -127,7 +124,7 @@ class CPatternFactory:
             types,
             [*parameters, *keywords],
             extra_declarations,
-            lambda node: is_clang_kind(node, "DeclStmt", "DECL_STMT") or has_clang_semantic_kind(node, SemanticKind.DECLARATION),
+            lambda node: is_clang_kind(node, "DeclStmt", "DECL_STMT") or node.semantic_kind is SemanticKind.DECLARATION,
         )
 
     def create_declaration(
@@ -296,7 +293,7 @@ class CPPPatternFactory(CPatternFactory):
         if SHOW_NODE:
             ASTShower.show_node(target_class)
         # search the call expr and the preceding type ref
-        call_expr = last(find_nodes(target_class, lambda node: has_clang_semantic_kind(node, SemanticKind.CALL)))
+        call_expr = last(find_nodes(target_class, lambda node: node.semantic_kind is SemanticKind.CALL))
         # include the preceding type ref
         assert isinstance(call_expr, ASTNode), "No call expression found"
         type_ref = call_expr.preceding_sibling

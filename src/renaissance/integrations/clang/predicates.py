@@ -1,5 +1,4 @@
 from renaissance.syntax_tree.node_protocol import NodeProtocol
-from renaissance.syntax_tree.semantic_kind import SemanticKind
 
 TYPE_REFERENCE_KINDS = frozenset({"TypeRef", "TYPE_REF", "type_identifier"})
 DECLARATION_REFERENCE_KINDS = frozenset({"DeclRefExpr", "DECL_REF_EXPR"})
@@ -35,7 +34,3 @@ def is_clang_method(node: NodeProtocol) -> bool:
 
 def is_clang_constructor(node: NodeProtocol) -> bool:
     return node.parser_kind in CONSTRUCTOR_KINDS
-
-
-def has_clang_semantic_kind(node: NodeProtocol, kind: SemanticKind) -> bool:
-    return node.semantic_kind is kind
