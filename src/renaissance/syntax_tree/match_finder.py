@@ -5,6 +5,7 @@ from renaissance.utils.ast_utils import use_dollar
 
 from .node_protocol import AstProtocol, NodeProtocol
 from .pattern_kind import PatternKind
+from .semantic_kind import SemanticKind
 
 IRRELEVANT_PROPS = {"macro_expansion", "start_point", "end_point", "source_code", "location", "type"}
 
@@ -22,6 +23,17 @@ def pattern_kind(node: NodeProtocol) -> PatternKind | None:
     if node.ast_type == MatchAll:
         return PatternKind.MATCH_ALL
     return None
+
+
+def node_kinds_match(source: NodeProtocol, pattern: NodeProtocol) -> bool:
+    if (
+        source.semantic_kind is not None
+        and pattern.semantic_kind is not None
+        and source.semantic_kind is not SemanticKind.NODE
+        and pattern.semantic_kind is not SemanticKind.NODE
+    ):
+        return source.semantic_kind == pattern.semantic_kind
+    return source.ast_type == pattern.ast_type
 
 
 class Variant:
@@ -101,7 +113,7 @@ def variant_in_match_stmt(src: NodeProtocol, cmp: NodeProtocol, expansions) -> l
     if pattern_kind(cmp) is PatternKind.MATCH_ONE and cmp.name:
         matched = _resolve_match_one(cmp.name, src, expansions)
         return [Variant(0, expansions, None, 0, 0)] if matched else []
-    if is_match_dict(src.properties, cmp.properties, expansions) and src.ast_type == cmp.ast_type:
+    if is_match_dict(src.properties, cmp.properties, expansions) and node_kinds_match(src, cmp):
         if not cmp.children and src.children:
             return []
         variants = find_variants(src.children, cmp.children, expansions)
