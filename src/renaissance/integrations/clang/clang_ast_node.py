@@ -19,8 +19,6 @@ from renaissance.integrations.types import (
     Definition,
     Literal,
     MacroDef,
-    MatchAll,
-    MatchOne,
     Statement,
     TranslationUnit,
     UnaryOperation,

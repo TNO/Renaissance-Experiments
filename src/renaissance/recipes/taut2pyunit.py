@@ -6,7 +6,6 @@ from pathlib import Path
 import test_data.test_class as tst_class
 import test_data.test_insert as tst_insert
 from renaissance.recipes.python_refactoring import PythonRefactoring
-from renaissance.syntax_tree.ast_finder import find_semantic_kind
 from renaissance.syntax_tree.match_finder import match_pattern
 from renaissance.syntax_tree.semantic_kind import SemanticKind
 
