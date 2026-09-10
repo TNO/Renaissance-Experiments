@@ -103,10 +103,7 @@ def format_node(node) -> str:
     prefix = " " if len(raw_lines) < 2 else f"\n    {node.indent}"
     formatted_lines = [f"{prefix}|{line}|" for line in raw_lines]
     semantic_name = node.semantic_kind.value
-    if DISPLAY_PARSER_KIND.get():
-        kind = node.parser_kind
-    else:
-        kind = node.parser_kind if semantic_name == "node" else semantic_name
+    kind = node.parser_kind if DISPLAY_PARSER_KIND.get() or semantic_name == "node" else semantic_name
     return (
         f"{node.indent}({kind}, {node.name}, "
         f"{node.filename}[{node.offset}:{node.offset + node.length}])"

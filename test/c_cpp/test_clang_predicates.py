@@ -1,5 +1,4 @@
 from renaissance.integrations.clang.predicates import (
-    has_clang_semantic_kind,
     is_clang_compound_statement,
     is_clang_constructor,
     is_clang_declaration_reference,
@@ -33,5 +32,5 @@ def test_clang_parser_predicates_cover_native_and_json_spellings():
 def test_clang_macro_and_semantic_predicates_are_explicit():
     assert is_clang_macro_definition(Node("MacroDefinition"))
     assert is_clang_macro_definition(Node("MACRO_DEFINITION"))
-    assert has_clang_semantic_kind(Node("FunctionDecl", SemanticKind.FUNCTION), SemanticKind.FUNCTION)
-    assert not has_clang_semantic_kind(Node("FunctionDecl"), SemanticKind.FUNCTION)
+    assert Node("FunctionDecl", SemanticKind.FUNCTION).semantic_kind is SemanticKind.FUNCTION
+    assert Node("FunctionDecl").semantic_kind is SemanticKind.NODE
