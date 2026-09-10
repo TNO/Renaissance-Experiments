@@ -13,10 +13,7 @@ Path(GRAPHML_DIR).mkdir(parents=True, exist_ok=True)
 
 
 def _has_semantic_kind(node, kind: SemanticKind) -> bool:
-    if getattr(node, "semantic_kind", None) is kind:
-        return True
-    legacy_kind = getattr(getattr(node, "ast_type", None), "__name__", "")
-    return legacy_kind == {SemanticKind.FUNCTION: "FunctionDef", SemanticKind.CALL: "Call"}.get(kind)
+    return node.semantic_kind is kind
 
 
 class Extractor:
