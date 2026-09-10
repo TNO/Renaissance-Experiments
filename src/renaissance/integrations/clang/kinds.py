@@ -29,4 +29,6 @@ CLANG_KIND_MAP = {
     "CompoundStmt": SemanticKind.STATEMENT,
     "COMPOUND_STMT": SemanticKind.STATEMENT,
     "Import": SemanticKind.IMPORT,
+    "INCLUSION_DIRECTIVE": SemanticKind.IMPORT,
+    "InclusionDirective": SemanticKind.IMPORT,
 }
