@@ -1,12 +1,12 @@
 import hypothesmith
 import libcst
 import pytest
-from hamcrest import assert_that, instance_of, is_
+from hamcrest import assert_that, is_
 from hypothesis import HealthCheck, given, settings
 
 from renaissance.integrations.python.ast.factory import PythonFactory, PythonPatternFactory
 from renaissance.integrations.tree_sitter.lst import LSTNode
-from renaissance.integrations.types import Statement
+from renaissance.syntax_tree.semantic_kind import SemanticKind
 from utils_for_tests import reject_unsupported_code
 
 
@@ -29,4 +29,4 @@ class TestPythonLstNode:
         factory = PythonFactory(LSTNode)
         node = factory.create_from_text(code)
         print(f"testing {code=} with LSTNode")
-        assert_that(node.children[0].ast_type(), instance_of(Statement), f"{code=}")
+        assert_that(node.children[0].semantic_kind is not SemanticKind.NODE, is_(True), f"{code=}")

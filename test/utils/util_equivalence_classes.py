@@ -1,4 +1,4 @@
-"""Util functions for equivalence class testing of AstProtocol nodes."""
+"""Util functions for equivalence class testing of NodeProtocol nodes."""
 
 import itertools
 from collections.abc import Callable, Sequence
@@ -7,7 +7,8 @@ import pytest
 from _pytest.mark.structures import ParameterSet
 from hamcrest import assert_that, equal_to
 
-from renaissance.syntax_tree.match_finder import AstProtocol, is_match
+from renaissance.syntax_tree.match_finder import is_match
+from renaissance.syntax_tree.node_protocol import NodeProtocol
 
 
 def escape_new_lines(txt: str) -> str:
@@ -17,7 +18,7 @@ def escape_new_lines(txt: str) -> str:
 
 def make_parametersets_of_equivalence_classes(
     info: str,
-    parse: Callable[[str], AstProtocol | Sequence[AstProtocol]],
+    parse: Callable[[str], NodeProtocol | Sequence[NodeProtocol]],
     equiv_classes: Sequence[Sequence[str]],
 ) -> list[ParameterSet]:
     """Expand equivalence classes into independent test cases.
@@ -61,18 +62,18 @@ def make_parametersets_of_equivalence_classes(
 
 
 def assert_pair_equivalence(
-    a: AstProtocol | Sequence[AstProtocol],
-    b: AstProtocol | Sequence[AstProtocol],
+    a: NodeProtocol | Sequence[NodeProtocol],
+    b: NodeProtocol | Sequence[NodeProtocol],
     expected: bool,
 ) -> None:
-    """Assert the expected (in)equivalence of a pair of nodes (AstProtocol or Sequence thereof)."""
+    """Assert the expected (in)equivalence of a pair of nodes (NodeProtocol or Sequence thereof)."""
     match (a, b):
         case (Sequence(), Sequence()):
             la = list(a)
             lb = list(b)
             actual = (len(la) == len(lb)) and all(is_match(ea, eb) for ea, eb in zip(la, lb, strict=True))
             assert_that(actual, equal_to(expected), f"matching {a} and {b} doesn't result in {expected}.")
-        case (AstProtocol(), AstProtocol()):
+        case (NodeProtocol(), NodeProtocol()):
             assert_that(is_match(a, b), equal_to(expected), f"matching {a} and {b} doesn't result in {expected}.")
         case _:
             assert_that(False, equal_to(expected), f"matching {a} and {b} doesn't result in {expected}.")

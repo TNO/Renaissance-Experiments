@@ -4,9 +4,9 @@ import pytest
 from hamcrest import assert_that, greater_than, has_length, is_
 
 import targets
-from renaissance.integrations.types import BinaryOperation, BogusType, Expression
 from renaissance.syntax_tree import ASTFactory, ASTFinder, ASTNode, ASTShower
-from renaissance.syntax_tree.ast_finder import find_ast_type
+from renaissance.syntax_tree.ast_finder import find_nodes
+from renaissance.syntax_tree.semantic_kind import SemanticKind
 
 from .factories import Factories
 
@@ -21,14 +21,14 @@ class TestKindFinder(TestFinder):
     @pytest.mark.parametrize("_, factory", Factories.factories)
     def test_find_bogus(self, _, factory):
         model = self.load_model(factory)
-        total = len(find_ast_type(model, BogusType))
+        total = len(find_nodes(model, lambda node: node.semantic_kind is SemanticKind.NODE and node.parser_kind == "BogusType"))
         assert_that(total, is_(0))
 
     @pytest.mark.parametrize("_, factory", Factories.factories)
     def test_find_expr(self, _, factory):
         model = self.load_model(factory)
         ASTShower.show_node(model)
-        assert_that(find_ast_type(model, Expression), has_length(greater_than(0)))
+        assert_that(find_nodes(model, lambda node: "EXPR" in node.parser_kind.upper()), has_length(greater_than(0)))
 
 
 class TestAllFinder(TestFinder):
@@ -37,7 +37,7 @@ class TestAllFinder(TestFinder):
         model = self.load_model(factory)
 
         def is_bogus(node: ASTNode):
-            if node.ast_type == BogusType:
+            if node.semantic_kind is SemanticKind.NODE and node.parser_kind == "BogusType":
                 yield node
 
         assert_that(ASTFinder.find_all(model, is_bogus), has_length(0))
@@ -47,7 +47,7 @@ class TestAllFinder(TestFinder):
         model = self.load_model(factory)
 
         def is_binary_operator(node: ASTNode):
-            if isinstance(node.ast_type(), BinaryOperation):
+            if node.semantic_kind is SemanticKind.BINARY_OPERATION:
                 yield node
 
         assert_that(ASTFinder.find_all(model, is_binary_operator), has_length(greater_than(0)))

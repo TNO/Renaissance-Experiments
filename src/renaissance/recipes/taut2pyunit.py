@@ -5,9 +5,9 @@ from pathlib import Path
 
 import test_data.test_class as tst_class
 import test_data.test_insert as tst_insert
-from renaissance.integrations.types import Attribute, FunctionDef, ImportFrom, ImportStatement, Name
 from renaissance.recipes.python_refactoring import PythonRefactoring
 from renaissance.syntax_tree.match_finder import match_pattern
+from renaissance.syntax_tree.semantic_kind import SemanticKind
 
 
 class Taut2Pyunit(PythonRefactoring):
@@ -78,11 +78,19 @@ class Taut2Pyunit(PythonRefactoring):
 
     def replace_taut(self):
         """Replace TAUT.TestCase by unittest.TestCase."""
-        [self.replace("unittest.TestCase", node, False, False) for node in self.find_ast_type(Attribute) if node.name == "TAUT.TestCase"]
-        [self.replace("unittest.TestCase", node, False, False) for node in self.find_ast_type(Name) if node.name == "TestCase"]
+        [
+            self.replace("unittest.TestCase", node, False, False)
+            for node in self.find_semantic_kind(SemanticKind.ATTRIBUTE)
+            if node.name == "TAUT.TestCase"
+        ]
+        [
+            self.replace("unittest.TestCase", node, False, False)
+            for node in self.find_semantic_kind(SemanticKind.NAME)
+            if node.name == "TestCase"
+        ]
 
     def remove_decorator(self):
-        [self.remove(node, False, False) for node in self.find_ast_type(Attribute) if node.name == "TAUT.log_stub"]
+        [self.remove(node, False, False) for node in self.find_semantic_kind(SemanticKind.ATTRIBUTE) if node.name == "TAUT.log_stub"]
 
     def add_self(self):
         matching = [
@@ -105,27 +113,43 @@ class Taut2Pyunit(PythonRefactoring):
             "emrwxviprxwh",
         ]
         parent_func = ["setUpCommon", "setUp"]
-        [self.replace("self." + node.name, node, False, False) for node in self.find_ast_type(Name) if node.name in matching]
+        [
+            self.replace("self." + node.name, node, False, False)
+            for node in self.find_semantic_kind(SemanticKind.NAME)
+            if node.name in matching
+        ]
 
         matching2 = ["EMRWxREAD.emrwxread"]
         [
             self.replace("self." + node.name.split(".")[1], node, False, False)
-            for node in self.find_ast_type(Attribute)
+            for node in self.find_semantic_kind(SemanticKind.ATTRIBUTE)
             if node.name in matching2 and node.get_ancestor("FunctionDef").name not in parent_func
         ]
 
     def convert_assert(self):
-        [self.replace("self.assertFalse", node, False, False) for node in self.find_ast_type(Attribute) if node.name == "self.assert_false"]
-        [self.replace("self.assertTrue", node, False, False) for node in self.find_ast_type(Attribute) if node.name == "self.assert_true"]
-        [self.replace("self.assertEqual", node, False, False) for node in self.find_ast_type(Attribute) if node.name == "self.assert_equal"]
+        [
+            self.replace("self.assertFalse", node, False, False)
+            for node in self.find_semantic_kind(SemanticKind.ATTRIBUTE)
+            if node.name == "self.assert_false"
+        ]
+        [
+            self.replace("self.assertTrue", node, False, False)
+            for node in self.find_semantic_kind(SemanticKind.ATTRIBUTE)
+            if node.name == "self.assert_true"
+        ]
+        [
+            self.replace("self.assertEqual", node, False, False)
+            for node in self.find_semantic_kind(SemanticKind.ATTRIBUTE)
+            if node.name == "self.assert_equal"
+        ]
 
     def remove_stubserver(self):
-        [self.remove(node, False, False) for node in self.find_ast_type(Attribute) if node.name == "TAUT.StubServer"]
+        [self.remove(node, False, False) for node in self.find_semantic_kind(SemanticKind.ATTRIBUTE) if node.name == "TAUT.StubServer"]
 
     def replace_mock(self):
         [
             self.replace("patch", node, False, False)
-            for node in self.find_ast_type(Attribute)
+            for node in self.find_semantic_kind(SemanticKind.ATTRIBUTE)
             if node.name == "mock.patch" and node.parent.parent.name == "decorator_list"
         ]
 
@@ -225,16 +249,16 @@ ImprovedStub.store_args = {}
     def convert_add_patcher(self):
         pattern = self.pattern_factory.create_statements("def tearDownCommon(self):\n    $$aa")
         for match in match_pattern(self.root.children, pattern):
-            patcher_pattern = [node for node in self.find_ast_type(FunctionDef) if node.name == "add_patcher"]
+            patcher_pattern = [node for node in self.find_semantic_kind(SemanticKind.FUNCTION) if node.name == "add_patcher"]
             if len(patcher_pattern) == 0:
                 self.insert_after(tst_class.insert_add_patcher, match.nodes)
 
     def find_import_interface(self, name: str):
         interface = name
         if name.islower():
-            node_list = [node for node in self.find_ast_type(ImportStatement) if node.name == name]
+            node_list = [node for node in self.find_semantic_kind(SemanticKind.IMPORT) if node.name == name]
             if node_list:
-                if node_list[0].ast_type == ImportFrom:
+                if node_list[0].parser_kind == "ImportFrom":
                     interface = node_list[0].properties["module"]
                 else:
                     interface = node_list[0].name if node_list else name
@@ -293,7 +317,11 @@ ImprovedStub.store_args = {}
         for match in match_pattern(self.root.children, pattern5):
             self.remove(match.nodes, False, False)
         self.commit()
-        [self.replace("self.context_stub", node, False, False) for node in self.find_ast_type(Name) if node.name == "context_stub"]
+        [
+            self.replace("self.context_stub", node, False, False)
+            for node in self.find_semantic_kind(SemanticKind.NAME)
+            if node.name == "context_stub"
+        ]
 
     def convert_teardown(self):
         matched_pattern = self.pattern_factory.create_statements("def tearDown(self):\n    $$aa")
@@ -345,7 +373,7 @@ ImprovedStub.store_args = {}
 
     def replace_taut_skip(self):
         """Replace @TAUT.skip_test by @unittest.skip."""
-        [self.replace("@unittest.skip", node) for node in self.find_ast_type(Attribute) if node.name == "TAUT.skip_test"]
+        [self.replace("@unittest.skip", node) for node in self.find_semantic_kind(SemanticKind.ATTRIBUTE) if node.name == "TAUT.skip_test"]
 
     def convert_import_verify(self):
         import_verify = self.pattern_factory.create_statements("self.import_and_verify_module('$a')")
@@ -398,7 +426,11 @@ ImprovedStub.store_args = {}
             "assert_raises",
             "assert_double_equal",
         ]
-        [self.replace("self." + node.name, node, False, False) for node in self.find_ast_type(Name) if node.name in matching]
+        [
+            self.replace("self." + node.name, node, False, False)
+            for node in self.find_semantic_kind(SemanticKind.NAME)
+            if node.name in matching
+        ]
 
     def move_indent(self, indent):
         pattern1 = self.pattern_factory.create_statements("""def $a($$b):

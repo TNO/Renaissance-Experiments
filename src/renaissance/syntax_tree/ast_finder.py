@@ -1,10 +1,11 @@
 import re
 from collections.abc import Callable, Iterator, Sequence
 
-from renaissance.integrations.types import Type
 from renaissance.utils.ast_utils import traverse
 
 from .ast_node import ASTNode
+from .node_protocol import NodeProtocol
+from .semantic_kind import SemanticKind
 
 
 class ASTFinder:
@@ -55,9 +56,13 @@ class ASTFinder:
             yield from ASTFinder.__matches_kind(child, pattern)
 
 
-def find_ast_type(ast_node, kind: type[Type]) -> Sequence:
-    return [n for n in traverse(ast_node) if isinstance(n.ast_type(), kind)]
+def find_nodes(ast_node: NodeProtocol, predicate) -> Sequence[NodeProtocol]:
+    return [node for node in traverse(ast_node) if predicate(node)]
 
 
-def matches_kind(ast_node, kind: type[Type]) -> bool:
-    return isinstance(ast_node.ast_type(), kind)
+def matches_node(ast_node: NodeProtocol, predicate) -> bool:
+    return predicate(ast_node)
+
+
+def find_semantic_kind(ast_node: NodeProtocol, kind: SemanticKind) -> Sequence[NodeProtocol]:
+    return find_nodes(ast_node, lambda node: node.semantic_kind is kind)

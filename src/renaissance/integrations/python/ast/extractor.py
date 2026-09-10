@@ -3,6 +3,7 @@ from pathlib import Path
 import networkx as nx
 
 from renaissance.integrations.python.ast.rst_node import PythonRstNode
+from renaissance.syntax_tree.semantic_kind import SemanticKind
 
 
 class PythonExtractor:
@@ -17,17 +18,17 @@ class PythonExtractor:
         self.graph.add_edge(folder, module_name, type="contains")
 
         for stmt in root:
-            match stmt.ast_type:
-                case "Import":
+            match stmt.semantic_kind:
+                case SemanticKind.IMPORT:
                     self.graph.add_edge(module_name, stmt.name, type="include")
-                case "ImportFrom":
+                case _ if stmt.parser_kind == "ImportFrom":
                     for alias in stmt.node.names:
                         self.graph.add_edge(module_name, f"{stmt.node.module}.{alias.name}", type="include")
-                case "FunctionDef":
+                case SemanticKind.FUNCTION:
                     self.graph.add_edge(module_name, f"{module_name}.{stmt.name}", type="definition")
                     self.graph.add_node(f"{module_name}.{stmt.name}", properties="function")
                     # TODO:  convert #, stmt.properties) to graphml
-                case "ClassDef":
+                case SemanticKind.CLASS:
                     self.graph.add_edge(module_name, f"{module_name}.{stmt.name}", type="definition")
                     self.graph.add_node(f"{module_name}.{stmt.name}")  # convert to args, stmt.properties)
                 case _:

@@ -3,10 +3,10 @@
 import textwrap
 
 from renaissance.integrations.clang import ClangASTNode, CPatternFactory
-from renaissance.integrations.types import Call
 from renaissance.syntax_tree import ASTFactory, ASTRewriter, ASTShower
-from renaissance.syntax_tree.ast_finder import find_ast_type
+from renaissance.syntax_tree.ast_finder import find_semantic_kind
 from renaissance.syntax_tree.match_finder import find_all
+from renaissance.syntax_tree.semantic_kind import SemanticKind
 
 example_code = """
 void f1(int a, int b, int c);
@@ -82,7 +82,7 @@ def refactor_with_nested_compositions(args):
     ASTShower.show_node(pattern1[0], include_properties=True)
 
     # we only want to search the call expression as a pattern so it's searched using the kind
-    pattern2 = find_ast_type(pattern2, Call)
+    pattern2 = find_semantic_kind(pattern2, SemanticKind.CALL)
 
     # the replacement code strip indent is used to be agnostic to the indentation of the replacement
     pattern1replacement = textwrap.dedent("""

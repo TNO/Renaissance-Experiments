@@ -126,7 +126,7 @@ Negative:
 
 - See ADR 01 (Children and properties) for the AST node structure that `Pattern.node` wraps.
 - See ADR 03 (Duck typing) for the protocol-based approach used by the matcher to accept `Pattern` objects.
-- See ADR 10 (Type hierarchy) for the `SyntacticKind` taxonomy used as the `kind` field.
+- See ADR 03 (Duck typing for nodes) for the protocol-based node shape and shared semantic kinds.
 
 ---
 

@@ -5,21 +5,10 @@ from hamcrest import assert_that, contains_exactly, contains_string, greater_tha
 from more_itertools.more import first
 
 from renaissance.integrations.clang import ClangASTNode
-from renaissance.integrations.types import (
-    Call,
-    ClassDef,
-    ConstructorExpression,
-    DeclarationExpression,
-    FunctionDef,
-    ParameterDef,
-    RecordDef,
-    StructDef,
-    TypedefDef,
-    TypeReference,
-    VariableDef,
-)
+from renaissance.integrations.clang.predicates import is_clang_declaration_reference, is_clang_type_reference
 from renaissance.syntax_tree import ASTNode, ASTShower
-from renaissance.syntax_tree.ast_finder import find_ast_type, matches_kind
+from renaissance.syntax_tree.ast_finder import find_nodes
+from renaissance.syntax_tree.semantic_kind import SemanticKind
 
 from .factories import Factories
 
@@ -41,11 +30,16 @@ class TestASTReference:
         ast = factory.create_from_text(code, "test.cpp")
         with tempfile.TemporaryDirectory() as temp_dir:
             ASTShower.store_node(f"{temp_dir}/c0.txt", ast)
-        call = first(find_ast_type(ast, (Call, ConstructorExpression)))
+        call = first(
+            find_nodes(
+                ast,
+                lambda node: node.semantic_kind is SemanticKind.CALL or node.parser_kind in {"CXXConstructExpr", "CXX_CONSTRUCT_EXPR"},
+            ),
+        )
         assert_that(isinstance(call, ASTNode), is_(True))
         refs = call.references
         assert_that(refs, has_length(greater_than(0)))
-        refs = [r for r in refs if isinstance(r.node.ast_type(), FunctionDef)]
+        refs = [r for r in refs if r.node.semantic_kind is SemanticKind.FUNCTION]
 
         assert_that(refs, has_length(greater_than(0)))
         for ref in refs:
@@ -55,19 +49,19 @@ class TestASTReference:
             assert_that(referenced_by, has_length(greater_than(0)))  # clang python return 2 references, clang json 1
             # clang python has a crosse reference to call clang json to the DeclRefExpr child of the call
             assert_that(call.name in [r.node.name for r in referenced_by] or call.children[0].name in [r.node.name for r in referenced_by])
-        declarations = list(n for n in find_ast_type(ast, FunctionDef) if n.name != "f")
+        declarations = list(n for n in find_nodes(ast, lambda node: node.semantic_kind is SemanticKind.FUNCTION) if n.name != "f")
         assert_that(declarations, has_length(greater_than(0)))
 
     @pytest.mark.parametrize("_, factory", Factories.factories)
     def test_call_reference(self, _, factory):
         ast = factory.create_from_text("void f(){} void f1(){ f();}", "test.c")
-        call = first(find_ast_type(ast, DeclarationExpression))
+        call = first(find_nodes(ast, is_clang_declaration_reference))
         assert_that(isinstance(call, ASTNode), is_(True))
         refs = call.references
         assert_that(refs, has_length(is_(1)))
         ref = refs[0]
         ref_node = ref.node
-        assert_that(matches_kind(ref_node, FunctionDef), is_(True))
+        assert_that(ref_node.semantic_kind is SemanticKind.FUNCTION, is_(True))
         assert_that(ref_node.name, is_("f"))
         referenced_by = ref_node.referenced_by
         assert_that(referenced_by, has_length(greater_than(0)))  # clang python return 2 references, clang json 1
@@ -88,13 +82,13 @@ class TestASTReference:
     )
     def test_var_reference(self, _, factory, code, args):
         ast = factory.create_from_text(code, "test.c")
-        using = first(find_ast_type(ast, DeclarationExpression))
+        using = first(find_nodes(ast, is_clang_declaration_reference))
         assert_that(isinstance(using, ASTNode), is_(True))
         refs = using.references
         assert_that(refs, has_length(is_(1)))
         ref = refs[0]
         ref_node = ref.node
-        assert_that(matches_kind(ref_node, (ParameterDef, VariableDef)), is_(True))
+        assert_that(ref_node.semantic_kind in {SemanticKind.PARAMETER, SemanticKind.DECLARATION}, is_(True))
         referenced_by = ref_node.referenced_by
         assert_that(referenced_by, has_length(greater_than(0)))  # clang python return 2 references, clang json 1
         assert_that(using.text in [r.node.text for r in referenced_by])
@@ -117,15 +111,19 @@ class TestASTReference:
         # in clang json the VarDecl node contains the reference
         # use show_node to understand the difference
         # ASTShower.show_node(ast)
-        using = first((n for n in find_ast_type(ast, TypeReference) if len(n.references) > 0), None)
+        using = first((n for n in find_nodes(ast, is_clang_type_reference) if len(n.references) > 0), None)
         if not using:
-            using = first(find_ast_type(ast, (ParameterDef, VariableDef)))
+            using = first(
+                n
+                for n in find_nodes(ast, lambda node: node.semantic_kind in {SemanticKind.PARAMETER, SemanticKind.DECLARATION})
+                if len(n.references) > 0
+            )
         assert_that(isinstance(using, ASTNode), is_(True))
         refs = using.references
         assert_that(refs, has_length(is_(1)))
         ref = refs[0]
         ref_node = ref.node
-        assert_that(matches_kind(ref_node, (RecordDef, TypedefDef, ClassDef)), is_(True))
+        assert_that(ref_node.semantic_kind in {SemanticKind.CLASS, SemanticKind.DECLARATION}, is_(True))
         referenced_by = ref_node.referenced_by
         assert_that(referenced_by, has_length(greater_than(0)))  # clang python returns 2 references, clang json 1
         assert_that(using.text in [r.node.text for r in referenced_by])
@@ -148,15 +146,15 @@ class TestASTReference:
         # in clang python, there is a TYPE_REF below the CLASS_DECL node whereas
         # in clang json there is a bases/base element
         # use show_node to understand the difference
-        using = first(find_ast_type(ast, TypeReference), None)
+        using = first(find_nodes(ast, is_clang_type_reference), None)
         if not using:
-            using = first(n for n in find_ast_type(ast, RecordDef) if n.name == "B")
+            using = first(n for n in find_nodes(ast, lambda node: node.semantic_kind is SemanticKind.CLASS) if n.name == "B")
         assert_that(isinstance(using, ASTNode), is_(True))
         refs = using.references
         assert_that(refs, has_length(is_(1)))
         ref = refs[0]
         ref_node = ref.node
-        assert_that(isinstance(ref_node.ast_type(), (RecordDef, ClassDef, StructDef)))
+        assert_that(ref_node.semantic_kind is SemanticKind.CLASS, is_(True))
         referenced_by = ref_node.referenced_by
         assert_that(referenced_by, has_length(greater_than(0)))  # clang python return 2 references, clang json 1
         name = referenced_by[0].node.children[0].name if len(referenced_by[0].node.children) else referenced_by[0].node.name

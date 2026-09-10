@@ -2,10 +2,10 @@ import textwrap
 
 from renaissance.integrations.python.ast.factory import PythonFactory, PythonPatternFactory
 from renaissance.integrations.tree_sitter.lst import LSTNode
-from renaissance.integrations.types import Call
 from renaissance.syntax_tree import ASTRewriter, ASTShower
-from renaissance.syntax_tree.ast_finder import find_ast_type
+from renaissance.syntax_tree.ast_finder import find_semantic_kind
 from renaissance.syntax_tree.match_finder import match_pattern
+from renaissance.syntax_tree.semantic_kind import SemanticKind
 
 example_code = """
 from module import foo, bar, baz, quux
@@ -42,7 +42,7 @@ def python_lst_smoke_test():
     ASTShower.show_node(atu)
 
     print("_______________simple find____________________________________")
-    nodes = find_ast_type(atu, Call)
+    nodes = find_semantic_kind(atu, SemanticKind.CALL)
 
     ASTShower.show_node(nodes[0])
 
