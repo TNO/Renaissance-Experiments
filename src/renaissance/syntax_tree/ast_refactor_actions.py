@@ -13,7 +13,11 @@ if TYPE_CHECKING:
 
 
 class ASTRefactorActions:
-    def __init__(self, processor: ASTProcessor, pattern_factory: CPPPatternFactory) -> None:
+    def __init__(
+        self,
+        processor: ASTProcessor,
+        pattern_factory: "CPPPatternFactory",  # noqa: UP037 RECHECK when ruff is updated (see astral-sh/ruff#20782)
+    ) -> None:
         self.processor = processor
         self.pattern_factory = pattern_factory
         self.replaced: set[int] = set()
