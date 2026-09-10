@@ -1,12 +1,12 @@
 from pathlib import Path
 
-import networkx
+import networkx as nx
 
 from renaissance.integrations.python.ast.rst_node import PythonRstNode
 
 
 class PythonExtractor:
-    graph = networkx.DiGraph()
+    graph = nx.DiGraph()
     codebase: dict = {}
 
     def process(self, file: Path):
@@ -41,5 +41,5 @@ class PythonExtractor:
         # self.edges |= tu._referenced_by
 
     def save_graph(self, filename: str):
-        networkx.write_graphml(self.graph, filename)
+        nx.write_graphml(self.graph, filename)
         print(f"Graph saved to: {filename}")

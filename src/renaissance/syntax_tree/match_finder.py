@@ -136,8 +136,7 @@ def _apply_child_match(variant: Variant, child_variants: list, cmp: Sequence, sr
         new_variants.append(forked)
         variant.close_greedy(variant.greedy, src, variant.expansion_start, i)
     if len(child_variants) > 1:
-        for v in child_variants:
-            new_variants.append(Variant(variant.index + 1, v.exp, variant.greedy, variant.expansion_start))
+        new_variants.extend(Variant(variant.index + 1, v.exp, variant.greedy, variant.expansion_start) for v in child_variants)
         variant.end_index = MIS_MATCH
     else:
         variant.exp = child_variants[0].exp
