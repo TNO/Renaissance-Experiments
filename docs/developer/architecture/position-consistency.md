@@ -25,25 +25,41 @@ Every node exposes an `offset` and `length` (or `end_offset`), and is navigable 
 (see [Code architecture](code-architecture.md)). The root is the same object, produced by the same
 parser invocation, that the buffer and every offset in the tree were derived from.
 
-A node may also expose a line and column for a given offset, for use in diagnostics and other
-human-facing interactions. Line/column is not itself used to apply a rewrite - only `offset`/`length`
-index directly into the buffer being patched - but it is subject to the same consistency requirement,
-since it locates the same position in the same source text.
+A parser determines, on its own terms, what positional information it exposes for a node - this may
+be an offset, a line/column pair, or both. This is a property of the given parser, not a design
+decision of Renaissance: we adopt whatever positional information the parser natively provides,
+rather than mandating a single representation.
 
-### Line and column as a derived representation
+### Position representation is defined by the parser
 
-Line and column cannot be computed independently of `offset` without risking the same disagreement
-this document addresses: a parser may compute line/column using its own line-splitting or encoding
-assumption, which need not match the buffer the rewriter patches (e.g. CPython's `ast` module
-reports `lineno`/`col_offset` relative to each line, which then needs a conversion back to a global
-offset).
+A parser also determines how it stores the file content internally in order to compute those
+positions - for example, as a byte buffer with a particular encoding, or as a sequence of
+characters. The parser may treat this internal representation as an implementation detail that is
+not exposed through its own public interface.
 
-**Decision**
+The rewriter uses the positional information produced by the parser to locate text within that same
+content. If the rewriter's view of the content (e.g. a sequence of bytes) differs from the view the
+parser used to compute positions (e.g. a sequence of characters, or vice versa), a position that is
+valid under one view need not be valid, or may refer to a different location, under the other - see
+[Matching](../../user/concepts/matching.md) for how the same text yields different results
+depending on the conceptual view (e.g. granularity) chosen; a byte-based view and a
+character-based view of the same text are exactly such differing views.
 
-Line and column are derived from a node's `offset` using a single line-index built once from the
-node's root buffer, not independently computed or cached per node from a separate source. A node's
-`offset` remains the single source of truth for its position; line and column are a presentation of
-that same offset.
+#### Decision - Adapter exposes the parser's view
+
+We require that the adapter/wrapper of each parser integration exposes:
+
+1. the positional information exactly as produced by the parser (offset and/or line/column,
+   whichever the parser natively provides), together with the (lazy) logic to convert an offset
+   into a line/column pair and vice versa, whenever the parser does not natively provide both, and
+1. the representation of the file content the parser used to compute that positional information
+   (e.g. bytes with a specific encoding, or a sequence of characters),
+
+even when the parser itself considers either of these an internal implementation detail not
+exposed through its own interface. This way the rewriter obtains the exact same view of the source
+text that the parser used, rather than assuming or independently reconstructing one. Requiring the
+conversion logic from the adapter, rather than from the Renaissance core, keeps the core and the
+rewriter independent of how a particular parser natively represents positional information.
 
 ### Guaranteeing agreement between parser and rewriter
 
@@ -53,7 +69,7 @@ parser used to compute the node's position in the first place. If the rewriter i
 reconstructs a buffer - for example, by re-encoding a node's text using an unrelated, ambient encoding -
 the two sides can silently disagree, producing incorrect or corrupted output.
 
-**Options considered**
+#### Options considered
 
 * Structural rewriting: mutate the tree and let the parser's own printer regenerate text, so no
   separate offset bookkeeping exists (as used for Python, see
@@ -67,14 +83,14 @@ the two sides can silently disagree, producing incorrect or corrupted output.
   a file re-read after an on-disk edit, or two different node representations for the same language
   parsed from the same file). Path equality would wrongly treat these as compatible.
 
-**Decision**
+#### Decision - Root identity
 
 1. A rewrite batch is scoped to a single root.
-2. Nodes are accepted into the same rewrite batch only if they share that root, checked by object
+1. Nodes are accepted into the same rewrite batch only if they share that root, checked by object
    identity (`is`), not by file path or any other derived key.
-3. The byte buffer used to apply a rewrite batch is obtained from the root itself, not re-derived
+1. The byte buffer used to apply a rewrite batch is obtained from the root itself, not re-derived
    by re-encoding node text.
-4. A mismatch is rejected immediately (fail fast) rather than silently applied.
+1. A mismatch is rejected immediately (fail fast) rather than silently applied.
 
 ## Invariants / guarantees
 
@@ -82,13 +98,15 @@ the two sides can silently disagree, producing incorrect or corrupted output.
 * The buffer patched by a rewrite is the same buffer the parser produced the involved nodes' offsets
   from.
 * A rewrite across nodes with different roots is rejected rather than silently applied.
-* A node's line and column, if exposed, are derived from its `offset` and its root's buffer, not
-  independently computed.
+* A node's positional information (offset and/or line/column) and the content representation it was
+  computed from are exposed by the adapter exactly as the parser produced them, not independently
+  re-derived or assumed.
 
 ## Related features
 
 * [Modify](modify.md)
 * [Rewrite semantics](rewrite-semantics.md)
+* [Matching](../../user/concepts/matching.md)
 
 ## Related tests
 
