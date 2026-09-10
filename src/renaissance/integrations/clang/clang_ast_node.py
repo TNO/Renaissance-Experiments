@@ -12,16 +12,8 @@ from renaissance.integrations.clang.cpp_utils import matches_node_kind
 from renaissance.integrations.clang.kinds import CLANG_KIND_MAP
 from renaissance.integrations.types import (
     KIND_MAP,
-    BinaryOperation,
-    CompoundStatement,
-    Declaration,
-    DeclarationExpression,
-    Definition,
-    Literal,
-    MacroDef,
-    Statement,
-    TranslationUnit,
-    UnaryOperation,
+    MatchAll,
+    MatchOne,
     UnknownType,
 )
 from renaissance.syntax_tree import ASTFinder, ASTNode, ASTReference
@@ -33,7 +25,27 @@ EMPTY_DICT = {}
 EMPTY_STR = ""
 EMPTY_LIST = []
 
-STMT_PARENTS = [CompoundStatement, TranslationUnit]
+STMT_PARENT_PARSER_KINDS = {
+    "CompoundStmt",
+    "COMPOUND_STMT",
+    "TranslationUnitDecl",
+    "TRANSLATION_UNIT",
+    "translation_unit",
+}
+STRUCTURAL_KINDS = {
+    SemanticKind.STATEMENT,
+    SemanticKind.DECLARATION,
+    SemanticKind.DEFINITION,
+    SemanticKind.FUNCTION,
+    SemanticKind.CLASS,
+    SemanticKind.CONDITIONAL,
+    SemanticKind.LOOP,
+    SemanticKind.RETURN,
+    SemanticKind.IMPORT,
+    SemanticKind.TRANSLATION_UNIT,
+}
+DECLARATION_EXPRESSION_PARSER_KINDS = {"DeclRefExpr", "DECL_REF_EXPR"}
+MACRO_DEFINITION_PARSER_KINDS = {"MacroDefinition", "MACRO_DEFINITION"}
 IRRELEVANT_PROPS = {"comment"}
 IRRELEVANT_NODES = {"comment"}
 PRINT_ALL_NODES = False
@@ -182,7 +194,7 @@ class ClangASTNode(ASTNode):
                 self._children.append(ClangASTNode(ClangASTNode.remove_wrapper(n), self.translation_unit, self))
 
         self._properties = self._derive_properties()
-        if self.ast_type == DeclarationExpression:
+        if self.parser_kind in DECLARATION_EXPRESSION_PARSER_KINDS:
             self._properties["name"] = self._name
 
     @property
@@ -281,8 +293,8 @@ class ClangASTNode(ASTNode):
             end_offset = self._offset + self._length
             if (
                 (not self._is_statement_or_declaration())
-                and (self.parent and self.parent.ast_type in STMT_PARENTS)
-                and self.ast_type not in [MacroDef]
+                and (self.parent and self.parent.parser_kind in STMT_PARENT_PARSER_KINDS)
+                and self.parser_kind not in MACRO_DEFINITION_PARSER_KINDS
             ):
                 content = self.root.binary_file_content()
                 while end_offset < len(content) and content[end_offset - 1] not in b";":
@@ -292,8 +304,7 @@ class ClangASTNode(ASTNode):
             return 0
 
     def _is_statement_or_declaration(self):
-        print(f"{self.ast_type} is statement: {self.kind}")
-        return isinstance(self.ast_type(), (Statement, Declaration, Definition))
+        return self.semantic_kind in STRUCTURAL_KINDS
 
     @override
     def matches_kind(self, node: ASTNode) -> bool:
@@ -305,7 +316,7 @@ class ClangASTNode(ASTNode):
         if offsets in self.translation_unit.macro_expansions:
             result["macro_expansion"] = self.text
 
-        if self.ast_type == BinaryOperation:
+        if self.semantic_kind is SemanticKind.BINARY_OPERATION:
             # TODO remove below code after clang release that supports the getOpCode() statement
             children = self.children
             start_offset = children[0].offset + children[0].length
@@ -314,7 +325,7 @@ class ClangASTNode(ASTNode):
             result["operator"] = operator.strip()
             # next statement works in C++ but not in Python (yet) will be released later
             # result['operator'] =  self.node.getOpCode()
-        elif self.ast_type == UnaryOperation:
+        elif self.semantic_kind is SemanticKind.UNARY_OPERATION:
             # TODO remove below code after clang release that supports the getOpCode() statement
             child = self.children[0]
             # list all attributes of self.node excluding the once starting with _
@@ -333,7 +344,7 @@ class ClangASTNode(ASTNode):
             result["prefixOperator"] = prefix_operator
             # next statement works in C++ but not in Python (yet) will be released later
             # result['operator'] =  self.node.getOpCode()
-        elif isinstance(self.ast_type(), Literal) or self.ast_type == DeclarationExpression:
+        elif self.semantic_kind is SemanticKind.LITERAL or self.parser_kind in DECLARATION_EXPRESSION_PARSER_KINDS:
             self._add_tokens(result, "LITERAL")
 
         is_all = {
@@ -348,7 +359,7 @@ class ClangASTNode(ASTNode):
     @property
     def is_statement(self) -> bool:
         """Pretty good definition."""
-        return self.parent is not None and self.parent.ast_type in STMT_PARENTS
+        return self.parent is not None and self.parent.parser_kind in STMT_PARENT_PARSER_KINDS
 
     @override
     @property
