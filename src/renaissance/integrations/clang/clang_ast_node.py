@@ -12,8 +12,14 @@ from renaissance.integrations.clang.cpp_utils import matches_node_kind
 from renaissance.integrations.clang.kinds import CLANG_KIND_MAP
 from renaissance.integrations.types import (
     KIND_MAP,
+    CompoundStatement,
+    Declaration,
+    Definition,
+    MacroDef,
     MatchAll,
     MatchOne,
+    Statement,
+    TranslationUnit,
     UnknownType,
 )
 from renaissance.syntax_tree import ASTFinder, ASTNode, ASTReference
@@ -25,27 +31,7 @@ EMPTY_DICT = {}
 EMPTY_STR = ""
 EMPTY_LIST = []
 
-STMT_PARENT_PARSER_KINDS = {
-    "CompoundStmt",
-    "COMPOUND_STMT",
-    "TranslationUnitDecl",
-    "TRANSLATION_UNIT",
-    "translation_unit",
-}
-STRUCTURAL_KINDS = {
-    SemanticKind.STATEMENT,
-    SemanticKind.DECLARATION,
-    SemanticKind.DEFINITION,
-    SemanticKind.FUNCTION,
-    SemanticKind.CLASS,
-    SemanticKind.CONDITIONAL,
-    SemanticKind.LOOP,
-    SemanticKind.RETURN,
-    SemanticKind.IMPORT,
-    SemanticKind.TRANSLATION_UNIT,
-}
 DECLARATION_EXPRESSION_PARSER_KINDS = {"DeclRefExpr", "DECL_REF_EXPR"}
-MACRO_DEFINITION_PARSER_KINDS = {"MacroDefinition", "MACRO_DEFINITION"}
 IRRELEVANT_PROPS = {"comment"}
 IRRELEVANT_NODES = {"comment"}
 PRINT_ALL_NODES = False
@@ -293,8 +279,8 @@ class ClangASTNode(ASTNode):
             end_offset = self._offset + self._length
             if (
                 (not self._is_statement_or_declaration())
-                and (self.parent and self.parent.parser_kind in STMT_PARENT_PARSER_KINDS)
-                and self.parser_kind not in MACRO_DEFINITION_PARSER_KINDS
+                and (self.parent and self.parent.ast_type in [CompoundStatement, TranslationUnit])
+                and self.ast_type not in [MacroDef]
             ):
                 content = self.root.binary_file_content()
                 while end_offset < len(content) and content[end_offset - 1] not in b";":
@@ -304,7 +290,7 @@ class ClangASTNode(ASTNode):
             return 0
 
     def _is_statement_or_declaration(self):
-        return self.semantic_kind in STRUCTURAL_KINDS
+        return isinstance(self.ast_type(), (Statement, Declaration, Definition))
 
     @override
     def matches_kind(self, node: ASTNode) -> bool:
@@ -359,7 +345,7 @@ class ClangASTNode(ASTNode):
     @property
     def is_statement(self) -> bool:
         """Pretty good definition."""
-        return self.parent is not None and self.parent.parser_kind in STMT_PARENT_PARSER_KINDS
+        return self.parent is not None and self.parent.ast_type in [CompoundStatement, TranslationUnit]
 
     @override
     @property
