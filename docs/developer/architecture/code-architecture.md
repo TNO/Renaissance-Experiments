@@ -29,6 +29,11 @@
    with basic functionality and a back door:
    `get_original_node` to obtain the AST node as provided by the parser.
 
+1. Parser integrations expose both an exact `parser_kind` and a shared `semantic_kind`.
+   Multiple parser kinds may map to one shared semantic kind, such as Clang's `FunctionDecl` and
+   `CXXMethodDecl` both mapping to a function. Parser-specific concepts remain available through
+   `parser_kind` and integration-local predicates; they are not forced into the shared vocabulary.
+
 1. AST Nodes are read only and immutable.
 
 1. AST Nodes are navigable, so parent must be present (except for the ATU / top node) and
