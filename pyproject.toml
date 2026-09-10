@@ -113,7 +113,7 @@ force-exclude = true
 select = [
     "A","AIR", "ASYNC", "COM", "DJ", "DTZ", "E", "EXE",
     "F", "FA", "FAST", "FLY", "G", "I", "ICN", "INT", "ISC",
-    "LOG", "NPY", "PTH", "PD", "PERF", "PIE", "PLC", "PYI",
+    "LOG", "NPY", "PTH", "PD", "PERF", "PGH", "PIE", "PLC", "PYI",
     "Q", "RSE", "SIM", "SLOT", "T10", "TID", "UP", "W", "YTT",
 ]
 #select = ["ALL"]  # goal of issue 
