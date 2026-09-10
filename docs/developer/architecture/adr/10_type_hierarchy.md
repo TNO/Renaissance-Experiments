@@ -1,6 +1,6 @@
 # 10 - Type Hierarchy
 
-Status: Accepted
+Status: Superseded
 
 Date: 2026-03-27
 
@@ -25,6 +25,10 @@ Authors:
 
 ## Context
 
+> **Superseded by the protocol-based node model.** This ADR records the historical
+> class-hierarchy approach. The current architecture uses structural node protocols,
+> shared `SemanticKind` values, and parser-local kind maps instead.
+
 the goal of this ADR is to establish a robust and maintainable type hierarchy for AST nodes use in the algorithms
 within the Renaissance project and across the languages.
 
@@ -34,6 +38,18 @@ exact string values. In addition, helper functions such as `is_statement`and `is
 own lookup tables. A class hierarchy provides a more robust and idiomatic solution.
 
 ## Decision
+
+The class-hierarchy decision in this ADR is no longer the target architecture. It is
+retained as historical context for the compatibility code being removed incrementally.
+
+The current decision is documented in [ADR 03](03_duck_typing.md) and uses:
+
+- `NodeProtocol` for the structural node contract.
+- `parser_kind` for the exact parser-provided kind.
+- `semantic_kind` for shared cross-language concepts.
+- parser-local maps and predicates for language-specific concepts.
+
+The remainder of this section describes the superseded approach.
 
 - Follow the Doxygen definition for common node types (e.g., statement, expression, declaration) and use native Python
 - types for language-specific or non-standard node kinds.

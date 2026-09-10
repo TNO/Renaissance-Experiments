@@ -39,6 +39,10 @@ expected by the consumers.
 - Provide adapter/wrapper helpers (see ADR 06) to normalize foreign node-like objects into the project's
   canonical node shape.
 
+The current implementation exposes `NodeProtocol` as the canonical structural contract. Nodes also expose
+`parser_kind` and `semantic_kind`; parser-specific mappings remain inside their integration. `PatternKind` is
+separate from node classification and represents matcher behavior such as one-node and all-node placeholders.
+
 ```python
 @runtime_checkable
 class NodeMatchProtocol(protocol):
