@@ -1,6 +1,6 @@
 from collections.abc import Iterable, Sequence
 
-from renaissance.integrations.types import MatchAll, MatchOne, Type
+from renaissance.integrations.types import MatchAll, MatchOne
 from renaissance.utils.ast_utils import use_dollar
 
 from .node_protocol import AstProtocol, NodeProtocol
