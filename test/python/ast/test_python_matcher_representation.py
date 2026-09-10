@@ -33,7 +33,7 @@ class TestPythonMatcherRepresentation:
         octal_upper = "0O1750"
         hexadecimal_lower = "0x3e8"
         hexadecimal_upper = "0X3E8"
-        float = "1000.000"
+        float_representation = "1000.000"
 
         representations = [
             normal,
@@ -52,7 +52,7 @@ class TestPythonMatcherRepresentation:
             octal_upper,
             hexadecimal_lower,
             hexadecimal_upper,
-            float,
+            float_representation,
         ]
 
         expressions = map(self.pattern_factory.create_expression, representations)
