@@ -21,3 +21,11 @@ We use the terms *proper ancestor* and *proper descendant* to exclude the node i
   * definition / (forward) declaration - references (ONLY in current file / analysis unit)
 * Inheritance
   * Base - Derived classes
+
+## Shared and adapter navigation
+
+`NodeProtocol` guarantees child traversal, so generic algorithms can navigate
+descendants. `ASTRewriter` requires `Rewritable.parent` for the upward
+navigation needed to order and apply edits. Adapters may provide further
+navigation helpers, such as `root`, `next_sibling`, and `preceding_sibling`,
+for recipes that need them. Their implementation remains adapter-owned.

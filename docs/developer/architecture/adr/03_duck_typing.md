@@ -39,11 +39,26 @@ expected by the consumers.
 - Provide adapter/wrapper helpers (see ADR 06) to normalize foreign node-like objects into the project's
   canonical node shape.
 
-The current implementation exposes `NodeProtocol` as the canonical structural contract. Nodes also expose
-`parser_kind` and `semantic_kind`; parser-specific mappings remain inside their integration. `PatternKind` is
-separate from node classification and represents matcher behavior such as one-node and all-node placeholders.
-Adapter equality uses `semantic_kind` when it is mapped and falls back to `parser_kind` for unmapped nodes.
-AST display defaults to semantic-first labels and accepts an explicit parser-kind display option for diagnostics.
+The current implementation exposes `NodeProtocol` as the minimum structural
+contract for traversal and matching. Nodes also expose `parser_kind` and
+`semantic_kind`; parser-specific mappings remain inside their integration.
+`PatternKind` is separate from node classification and represents matcher
+behavior such as one-node and all-node placeholders. Adapter equality uses
+`semantic_kind` when it is mapped and falls back to `parser_kind` for unmapped
+nodes. AST display defaults to semantic-first labels and accepts an explicit
+parser-kind display option for diagnostics.
+
+`semantic_kind` is an optional coarse vocabulary for broad searches,
+diagnostics, and cross-adapter tests. It does not attempt to model every
+language construct or make transformation recipes portable; recipes may use
+exact `parser_kind` values and parser-local predicates when needed.
+
+`NodeProtocol` is deliberately separate from source-text rewriting. The shared
+`ASTRewriter` accepts a separate `Rewritable` protocol containing source
+locations, source identity, text, and parent navigation. Adapters retain
+control of parsing, source-span and trivia semantics, and reparsing; the
+protocols state only what a shared Renaissance facility consumes. No common
+parser backend or parser lifecycle interface is required.
 
 ```python
 @runtime_checkable
