@@ -7,14 +7,14 @@ from more_itertools.more import last
 from c_cpp.factories import Factories
 from renaissance.integrations.clang import ClangASTNode, CPatternFactory
 from renaissance.integrations.clang.clang_json_ast_node import ClangJsonASTNode
-from renaissance.integrations.types import Call, Declaration
 from renaissance.syntax_tree import (
     ASTFactory,
     ASTNode,
     ASTShower,
 )
-from renaissance.syntax_tree.ast_finder import find_ast_type
+from renaissance.syntax_tree.ast_finder import find_nodes
 from renaissance.syntax_tree.match_finder import find_in_list, find_variants, is_match, match_pattern
+from renaissance.syntax_tree.semantic_kind import SemanticKind
 from utils_for_tests import compress, debug_mismatch, show_node
 
 logger = logging.getLogger(__name__)
@@ -365,43 +365,43 @@ class TestUseAtuToCreatePattern(TestCMatchFinder):
             [
                 (
                     "void f() {const char* bar = BAR;}",
-                    Declaration,
+                    SemanticKind.DECLARATION,
                     ["const char* bar = BAR;"],
                     {},
                 ),
                 (
                     "void f() {const char* foo = FOO;}",
-                    Declaration,
+                    SemanticKind.DECLARATION,
                     ["const char* foo = FOO;"],
                     {},
                 ),
                 (
                     "void f() {const char* same = SAME;}",
-                    Declaration,
+                    SemanticKind.DECLARATION,
                     ["const char* same = SAME;"],
                     {},
                 ),
                 (
                     "void f() {const char* $name = BAR;}",
-                    Declaration,
+                    SemanticKind.DECLARATION,
                     ["const char* bar = BAR;"],
                     {"$name": ["bar"]},
                 ),
                 (
                     "void f() {const char* $name = FOO;}",
-                    Declaration,
+                    SemanticKind.DECLARATION,
                     ["const char* foo = FOO;"],
                     {"$name": ["foo"]},
                 ),
                 (
                     "void f() {const char* $name = SAME;}",
-                    Declaration,
+                    SemanticKind.DECLARATION,
                     ["const char* same = SAME;"],
                     {"$name": ["same"]},
                 ),
                 (
                     "const char* $$args; void f() { print($$args);}",
-                    Call,
+                    SemanticKind.CALL,
                     ['print("%s %s %s", foo, bar, same);'],
                     {"$$args": ['"%s %s %s"', "foo", "bar", "same"]},
                 ),
@@ -436,7 +436,15 @@ class TestUseAtuToCreatePattern(TestCMatchFinder):
             return
         pattern_factory = CPatternFactory(factory, ref_node=atu)
         statements_atu = pattern_factory.create(statements)
-        statements = last(find_ast_type(statements_atu, pattern_type))  # pick the last statement
+        statements = last(
+            find_nodes(
+                statements_atu,
+                lambda node: (
+                    node.semantic_kind is pattern_type
+                    or (pattern_type is SemanticKind.DECLARATION and node.parser_kind in {"DeclStmt", "DECL_STMT"})
+                ),
+            ),
+        )  # pick the last statement
         func_body = atu.children[-1].children[2].children
         result = match_pattern(func_body, [statements], recursive=True)
         # should find multiple matches, at least the one in the pattern and the one in the function body
