@@ -127,7 +127,7 @@ class CPatternFactory:
             types,
             [*parameters, *keywords],
             extra_declarations,
-            lambda node: has_clang_semantic_kind(node, SemanticKind.DECLARATION),
+            lambda node: is_clang_kind(node, "DeclStmt", "DECL_STMT") or has_clang_semantic_kind(node, SemanticKind.DECLARATION),
         )
 
     def create_declaration(

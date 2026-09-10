@@ -5,16 +5,9 @@ from more_itertools import last
 from c_cpp.factories import Factories
 from renaissance.integrations.clang import ClangASTNode, CPatternFactory
 from renaissance.integrations.clang.c_pattern_factory import derive_header_text
-from renaissance.integrations.types import (
-    CompoundStatement,
-    Declaration,
-    DeclarationExpression,
-    FunctionDef,
-    MatchOne,
-    VariableDef,
-)
+from renaissance.integrations.clang.predicates import is_clang_compound_statement, is_clang_declaration_reference, is_clang_kind
 from renaissance.syntax_tree import ASTFactory, ASTShower
-from renaissance.syntax_tree.ast_finder import find_ast_type
+from renaissance.syntax_tree.ast_finder import find_nodes
 from renaissance.syntax_tree.semantic_kind import SemanticKind
 
 
@@ -49,7 +42,8 @@ class TestCPatternFactory:
         simple_header = ";\n".join(
             c.signature
             for c in atu.children
-            if c.is_part_of_translation_unit() and not (c.ast_type == FunctionDef and c.children[-1].kind == CompoundStatement)
+            if c.is_part_of_translation_unit()
+            and not (c.semantic_kind is SemanticKind.FUNCTION and is_clang_compound_statement(c.children[-1]))
         )
 
         assert_that(header, contains_string('#define FOO "foo";'))
@@ -175,8 +169,8 @@ class TestDeclaration:
         count_refs = 0
         count_vars = 0
         for decl in created_declarations:
-            count_refs += len(find_ast_type(decl, (DeclarationExpression, MatchOne)))
-            count_vars += len(find_ast_type(decl, VariableDef))
+            count_refs += len(find_nodes(decl, lambda node: is_clang_declaration_reference(node) or node.pattern_kind is not None))
+            count_vars += len(find_nodes(decl, lambda node: node.semantic_kind is SemanticKind.DECLARATION))
             ASTShower.show_node(decl)
         assert_that(count_vars, is_(expected_vars))
         assert_that(count_refs, greater_than_or_equal_to(expected_refs))
@@ -212,7 +206,7 @@ class TestStatements:
 
         count_refs = 0
         for decl in created_statements:
-            count_refs += len(find_ast_type(decl, (DeclarationExpression, MatchOne)))
+            count_refs += len(find_nodes(decl, lambda node: is_clang_declaration_reference(node) or node.pattern_kind is not None))
         assert_that(expected_stmts, is_(len(created_statements)))
         assert_that(expected_refs, less_than_or_equal_to(count_refs))
         for stmt in created_statements:
@@ -274,10 +268,6 @@ class TestUseAtuToCreatePatterns:
         if _ == "clang_json":
             pytest.xfail("Clang JSON source offsets currently truncate reconstructed header text")
         assert statement_text.replace(" ", "") in pattern_root.signature.replace(" ", "")
-
-    def test_create_statement_accepts_protocol_predicate(self):
-        factory = ASTFactory(ClangASTNode, [])
-        pattern_factory = CPatternFactory(factory)
 
         statement = pattern_factory.create_statement(
             "a == 3;",

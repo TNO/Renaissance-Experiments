@@ -1,14 +1,14 @@
 # This script demonstrates various techniques for refactoring C code using an abstract syntax tree (AST) approach.
 # It showcases how to add comments, replace types, and find specific nodes in the AST using different methods.
 from renaissance.integrations.clang import ClangASTNode, CPatternFactory
-from renaissance.integrations.types import TypeReference
+from renaissance.integrations.clang.predicates import is_clang_type_reference
 from renaissance.syntax_tree import (
     ASTFactory,
     ASTFinder,
     ASTRewriter,
     ASTShower,
 )
-from renaissance.syntax_tree.ast_finder import find_ast_type, matches_kind
+from renaissance.syntax_tree.ast_finder import find_nodes
 from renaissance.syntax_tree.match_finder import find_all, match_pattern
 
 example_code = """
@@ -122,10 +122,10 @@ def example_use_ast_kind_finder(factory, _):
     rewriter = ASTRewriter(atu)
 
     # Find all nodes of kind TYPE_REF (case-insensitive) and filter those with name 'old'
-    [rewriter.replace("fancy_new", node) for node in find_ast_type(atu, TypeReference) if node.name == "old"]
+    [rewriter.replace("fancy_new", node) for node in find_nodes(atu, is_clang_type_reference) if node.name == "old"]
 
     # Print the results after replacing the old type by fancy_new
-    print("results after replacing the old type by fancy_new using find_ast_type")
+    print("results after replacing the old type by fancy_new using a Clang predicate")
     result = rewriter.apply_to_string().strip()
     print(result)
     return result, expected_result_old_fancy_new
@@ -141,7 +141,7 @@ def example_use_ast_function_finder(factory, _):
 
     # Define a match function to find nodes of kind TYPE_REF with name 'old'
     def match(node):
-        res = matches_kind(node, TypeReference) and node.name == "old"
+        res = is_clang_type_reference(node) and node.name == "old"
         return res
 
     # Use ASTFinder to find all matching nodes and replace 'old' with 'fancy_new'

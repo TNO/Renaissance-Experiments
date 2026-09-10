@@ -64,13 +64,5 @@ def matches_node(ast_node: NodeProtocol, predicate) -> bool:
     return predicate(ast_node)
 
 
-def find_ast_type(ast_node: NodeProtocol, kind) -> Sequence:
-    return find_nodes(ast_node, lambda node: isinstance(node.ast_type(), kind))
-
-
 def find_semantic_kind(ast_node: NodeProtocol, kind: SemanticKind) -> Sequence[NodeProtocol]:
     return find_nodes(ast_node, lambda node: node.semantic_kind is kind)
-
-
-def matches_kind(ast_node, kind) -> bool:
-    return isinstance(ast_node.ast_type(), kind)

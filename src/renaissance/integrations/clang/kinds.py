@@ -16,6 +16,8 @@ CLANG_KIND_MAP = {
     "StringLiteral": SemanticKind.LITERAL,
     "VarDecl": SemanticKind.DECLARATION,
     "VAR_DECL": SemanticKind.DECLARATION,
+    "DeclStmt": SemanticKind.STATEMENT,
+    "DECL_STMT": SemanticKind.STATEMENT,
     "TypedefDecl": SemanticKind.DECLARATION,
     "TYPEDEF_DECL": SemanticKind.DECLARATION,
     "ParmVarDecl": SemanticKind.PARAMETER,
