@@ -2,7 +2,6 @@ from collections.abc import Callable, Iterator, Sequence
 from pathlib import Path
 
 import renaissance.syntax_tree.match_finder
-from renaissance.integrations.types import Type
 from renaissance.syntax_tree import ASTNode
 from renaissance.syntax_tree.ast_factory import ASTFactory
 from renaissance.syntax_tree.ast_finder import ASTFinder, find_ast_type, find_semantic_kind
@@ -79,7 +78,7 @@ class ASTProcessor:
     def find_all(self, function: Callable[[ASTNode], Iterator[ASTNode] | bool]) -> Sequence[ASTNode]:
         return ASTFinder.find_all(self.__root_node, function)
 
-    def find_ast_type(self, kind: type[Type]) -> Sequence[ASTNode]:
+    def find_ast_type(self, kind) -> Sequence[ASTNode]:
         return find_ast_type(self.__root_node, kind)
 
     def find_semantic_kind(self, kind: SemanticKind) -> Sequence[NodeProtocol]:
