@@ -29,6 +29,10 @@ Authors:
 > class-hierarchy approach. The current architecture uses structural node protocols,
 > shared `SemanticKind` values, and parser-local kind maps instead.
 
+The superseded hierarchy has now been removed. This is an intentional breaking
+change: consumers must use `NodeProtocol`, `SemanticKind`, `PatternKind`,
+`parser_kind`, and parser-local predicates. No compatibility wrapper is provided.
+
 the goal of this ADR is to establish a robust and maintainable type hierarchy for AST nodes use in the algorithms
 within the Renaissance project and across the languages.
 
