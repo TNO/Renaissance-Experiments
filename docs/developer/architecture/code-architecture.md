@@ -29,6 +29,13 @@
    with basic functionality and a back door:
    `get_original_node` to obtain the AST node as provided by the parser.
 
+1. Parser integrations expose both an exact `parser_kind` and a shared `semantic_kind`.
+   Multiple parser kinds may map to one shared semantic kind, such as Clang's `FunctionDecl` and
+   `CXXMethodDecl` both mapping to a function. Parser-specific concepts remain available through
+   `parser_kind` and integration-local predicates; they are not forced into the shared vocabulary.
+   `semantic_kind` is a coarse convenience for broad finding, diagnostics, and tests, rather than a
+   complete cross-language model for transformation recipes.
+
 1. AST Nodes are read only and immutable.
 
 1. AST Nodes are navigable, so parent must be present (except for the ATU / top node) and
@@ -45,8 +52,12 @@
    In most cases, standard filter functions (as describe before) are enough, but we enable user specific
    filter functions that access the original AST.
 
-1. We collect multiple transformations, we are syntax aware - to handle shared text boundaries,
-   and then in one step [rewrite](rewrite-semantics.md) the code text.
+1. We collect multiple transformations, remain syntax aware to handle shared text boundaries, and then
+   [rewrite](rewrite-semantics.md) the code text in one step with the shared `ASTRewriter`. Parser integrations
+   currently provide parse/reparse operations and source-span/trivia semantics separately; `NodeProtocol`
+   standardizes finding and matching, while `Rewritable` identifies nodes usable as rewrite targets. This
+   shares the transformation mechanism; recipe selection and generated replacement text normally remain
+   language- or parser-specific.
 
 1. For general purpose, we don't mandate that the final text should be parsable.
    When chaining changes, all intermediate texts must be parsable - in case of transpilation,

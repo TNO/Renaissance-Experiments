@@ -4,9 +4,9 @@ from more_itertools import last
 
 from renaissance.integrations.clang import CPatternFactory
 from renaissance.integrations.clang.clang_json_ast_node import ClangJsonASTNode
-from renaissance.integrations.types import Declaration
 from renaissance.syntax_tree import ASTFactory, MatchFinder
-from renaissance.syntax_tree.ast_finder import find_ast_type
+from renaissance.syntax_tree.ast_finder import find_nodes
+from renaissance.syntax_tree.semantic_kind import SemanticKind
 
 
 class TestClangJsonMatchFinder:
@@ -23,7 +23,7 @@ class TestClangJsonMatchFinder:
         atu = factory.create_from_text(code, "test.c")
         pattern_factory = CPatternFactory(factory, ref_node=atu)
         statements_atu = pattern_factory.create(statements)
-        statements = last(find_ast_type(statements_atu, Declaration))
+        statements = last(find_nodes(statements_atu, lambda node: node.semantic_kind is SemanticKind.STATEMENT))
 
         result = MatchFinder.match_pattern(atu.children, [statements])
 

@@ -15,7 +15,7 @@ authors = [
 license = { text = "EPL-2.0" }
 requires-python = "==3.14.*"
 dependencies = [
-    "textx==4.3.0",
+    "textx==4.4.0",
     "dataclasses-json==0.6.7",
     "pyperclip>=1.8",
     "clang==18.1.8",

@@ -1,9 +1,9 @@
 from hamcrest import assert_that, has_length, is_
 
 from renaissance.integrations.clang import ClangASTNode, CPatternFactory
-from renaissance.integrations.types import Declaration
 from renaissance.syntax_tree import ASTFactory, MatchFinder
-from renaissance.syntax_tree.ast_finder import find_ast_type
+from renaissance.syntax_tree.ast_finder import find_nodes
+from renaissance.syntax_tree.semantic_kind import SemanticKind
 
 
 class ClangMatchFinderTest:
@@ -23,7 +23,7 @@ class ClangMatchFinderTest:
         atu = factory.create_from_text(code, "test.c")
         pattern_factory = CPatternFactory(factory, ref_node=atu)
         statements_atu = pattern_factory.create(fun)
-        statements = find_ast_type(statements_atu, Declaration).find_last().get()
+        statements = find_nodes(statements_atu, lambda node: node.semantic_kind is SemanticKind.STATEMENT)[-1]
 
         func_body = atu.children[-1].children[-1].children
         result = MatchFinder.match_pattern(func_body, [statements])

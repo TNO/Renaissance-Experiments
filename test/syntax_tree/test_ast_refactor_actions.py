@@ -1,7 +1,7 @@
 from hamcrest import assert_that, is_
 
-from renaissance.integrations.types import Name
 from renaissance.syntax_tree import ASTRefactorActions
+from renaissance.syntax_tree.semantic_kind import SemanticKind
 
 
 class TestASTRefactorActions:
@@ -16,29 +16,34 @@ class TestASTRefactorActions:
         proc.find_all.return_value = []
         factory = mocker.Mock()
         refactor_actions = ASTRefactorActions(proc, factory)
-        refactor_actions.replace_expr("name", "my_awsome_name", Name)
+        refactor_actions.replace_expr("name", "my_awsome_name", SemanticKind.NAME)
         assert_that(proc.find_all.called)
 
     def test_replace_name(self, mocker):
         node = mocker.Mock()
         node.offset = 1
+        node.semantic_kind = SemanticKind.NAME
+        node.name = "name"
         proc = mocker.Mock()
         factory = mocker.Mock()
         proc.find_all.return_value = [node]
         refactor_actions = ASTRefactorActions(proc, factory)
 
-        refactor_actions.replace_name("name", "my_awsome_name", "Name", "Call")
+        refactor_actions.replace_name("name", "my_awsome_name", SemanticKind.NAME, SemanticKind.CALL)
 
         assert_that(proc.replace.called)
 
     def test_replace_text(self, mocker):
         node = mocker.Mock()
+        node.semantic_kind = SemanticKind.LITERAL
+        node.text = "text"
+        node.name = "text"
         proc = mocker.Mock()
         factory = mocker.Mock()
         refactor_actions = ASTRefactorActions(proc, factory)
         proc.find_all.return_value = [node, node]
 
-        refactor_actions.replace_text("text", "my_awsome_text", "StringLiteral", "Call")
+        refactor_actions.replace_text("text", "my_awsome_text", SemanticKind.LITERAL, SemanticKind.CALL)
 
         assert_that(proc.replace.called)
 

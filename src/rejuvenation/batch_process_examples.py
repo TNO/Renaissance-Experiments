@@ -5,7 +5,6 @@ from dataclasses import dataclass
 
 from renaissance.integrations.clang import ClangASTNode
 from renaissance.integrations.clang.clang_json_ast_node import ClangJsonASTNode
-from renaissance.integrations.types import Call
 from renaissance.recipes import CleanupRefactoring
 from renaissance.syntax_tree import (
     ASTFactory,
@@ -20,6 +19,7 @@ from renaissance.syntax_tree.recipe_ast_processor import (
     final_action,
     recipe_step,
 )
+from renaissance.syntax_tree.semantic_kind import SemanticKind
 
 example_1 = textwrap.dedent("""
         void x(int a) {}
@@ -109,7 +109,7 @@ def batch_repeat_example():
 
     # remove a function to create more unused variables
     def remove_function(ast_processor: ASTProcessor):
-        [ast_processor.insert_before("// ", node, False, False) for node in ast_processor.find_ast_type(Call)]
+        [ast_processor.insert_before("// ", node, False, False) for node in ast_processor.find_semantic_kind(SemanticKind.CALL)]
 
     # batch_processor.repeat(simple_codebase_provider, [remove_function])
     batch_processor.repeat(
@@ -134,7 +134,7 @@ class AnalysisRecipe:
     def store_function_call(self, ast_processor: ASTProcessor) -> Callable[[], None] | None:
         # find all function calls and store them, this routing is invoked in parallel!
         calls: list[CallInfo] = []
-        [AnalysisRecipe._add_function_call(node, calls) for node in ast_processor.find_ast_type(Call)]
+        [AnalysisRecipe._add_function_call(node, calls) for node in ast_processor.find_semantic_kind(SemanticKind.CALL)]
         # the resulting lambda is invoked single threaded
         # this kind of mechanism is mainly used to store results from multiple processors
         # for refactoring operations this is not needed as a refactoring operation is single threaded

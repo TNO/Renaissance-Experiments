@@ -5,8 +5,8 @@ from pathlib import Path
 import targets
 from renaissance.integrations.clang import ClangASTNode, CompilationDatabase
 from renaissance.integrations.clang.clang_json_ast_node import ClangJsonASTNode
-from renaissance.integrations.types import FunctionDef
 from renaissance.syntax_tree import ASTProcessor, ASTShower
+from renaissance.syntax_tree.semantic_kind import SemanticKind
 
 
 def main(args):
@@ -21,7 +21,7 @@ def main(args):
             ASTShower.show_node(atu, include_properties=True)
             # do something with the factory and atu
             ast_refactor = ASTProcessor(atu, factory, in_memory=True)
-            [print(n.text) for n in ast_refactor.find_ast_type(FunctionDef)]
+            [print(n.text) for n in ast_refactor.find_semantic_kind(SemanticKind.FUNCTION)]
 
 
 if __name__ == "__main__":

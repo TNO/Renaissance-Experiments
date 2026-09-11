@@ -5,7 +5,8 @@ require minimum amount of code to make the matcher work.
 
 import ast
 
-from renaissance.integrations.types import KIND_MAP, BogusType
+from renaissance.integrations.python.ast.kinds import PYTHON_KIND_MAP
+from renaissance.syntax_tree.semantic_kind import SemanticKind
 
 
 class ASTExtension:
@@ -21,13 +22,13 @@ class ASTExtension:
 
     @staticmethod
     @property
-    def ast_kind(self):
-        return KIND_MAP.get(type(self).__name__, BogusType).__name__
+    def parser_kind(self):
+        return type(self).__name__
 
     @staticmethod
     @property
-    def ast_type(self):
-        return KIND_MAP.get(type(self).__name__, BogusType)
+    def semantic_kind(self):
+        return PYTHON_KIND_MAP.get(type(self).__name__, SemanticKind.NODE)
 
     @staticmethod
     @property

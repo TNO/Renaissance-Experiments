@@ -12,8 +12,9 @@ from renaissance.integrations.python.ast.cst_node import PythonCstNode
 from renaissance.integrations.python.ast.rst_node import PythonRstNode
 from renaissance.integrations.tree_sitter.adapter import TreeSitterAdapter
 from renaissance.integrations.tree_sitter.lst import LSTNode
-from renaissance.integrations.types import Arg, DeclarationExpression, ExpressionStatement, MatchAll, MatchOne, Name, Type
-from renaissance.syntax_tree.match_finder import AstProtocol, is_match
+from renaissance.syntax_tree.match_finder import is_match
+from renaissance.syntax_tree.node_protocol import NodeProtocol
+from renaissance.syntax_tree.pattern_kind import PatternKind
 from renaissance.utils.ast_utils import replace_dollar, use_dollar
 
 _MATCH_ALL_RE = re.compile(r"^" + re.escape(MATCH_ALL) + r"\w+$")
@@ -22,13 +23,16 @@ _MATCH_ONE_RE = re.compile(r"^" + re.escape(MATCH_ONE) + r"\w+$")
 SHOW_NODE = False
 
 
-class PythonPattern(AstProtocol):
+class PythonPattern(NodeProtocol):
     def __init__(self, node):
         self.node: PythonRstNode = node
         if type(node) is str:
             print(node)
             return
-        self.ast_type: Type = self.derive_type(node)
+        self.parser_kind = getattr(node, "parser_kind", type(node).__name__)
+        self.semantic_kind = getattr(node, "semantic_kind", None)
+        self.pattern_kind = None
+        self._derive_pattern_kind(node)
 
         self.properties: dict = node.properties
         self.children: list[PythonPattern] = [PythonPattern(node) for node in node.children]
@@ -38,28 +42,13 @@ class PythonPattern(AstProtocol):
         else:
             self.name = ""
 
-    def __eq__(self, other: AstProtocol) -> bool:
+    def __eq__(self, other: NodeProtocol) -> bool:
         return is_match(other, self)
 
     def __repr__(self):
         return use_dollar(str(self.node))
 
-    def derive_type(self, node) -> str:
-        # signature = ""
-        # if isinstance(node.ast_type(), Argument):
-        #     signature = node.node.arg
-        # elif isinstance(node.ast_type(), Name):
-        #     signature = node.node.value
-        # elif isinstance(node.ast_type(), ExpressionStatement) and isinstance(node.node.value, ast.Name):
-        #     signature = node.node.value.id
-        # if _MATCH_ALL_RE.match(signature):
-        #     return MatchAll
-        # elif _MATCH_ONE_RE.match(signature):
-        #     return MatchOne
-        # if isinstance(node, LSTNode):
-        #     return node.ast_type
-        # else:
-        #     return node.ast_type
+    def _derive_pattern_kind(self, node) -> None:
         if isinstance(node, ast.arg):
             signature = node.arg
         elif isinstance(node, ast.Name):
@@ -71,13 +60,11 @@ class PythonPattern(AstProtocol):
         else:
             signature = node.name
 
-        if node.ast_type in [DeclarationExpression, ExpressionStatement, Name, Arg]:
+        if node.parser_kind in {"Name", "Expr", "arg", "Param"}:
             if _MATCH_ALL_RE.match(signature):
-                return MatchAll
-            if _MATCH_ONE_RE.match(signature):
-                return MatchOne
-
-        return node.ast_type
+                self.pattern_kind = PatternKind.MATCH_ALL
+            elif _MATCH_ONE_RE.match(signature):
+                self.pattern_kind = PatternKind.MATCH_ONE
 
 
 class PythonFactory:
@@ -91,7 +78,8 @@ class PythonFactory:
             clazz.node = ASTExtension.ast_node
 
             # clazz.name = ASTExtension.ast_name
-            clazz.ast_type = ASTExtension.ast_type
+            clazz.parser_kind = ASTExtension.parser_kind
+            clazz.semantic_kind = ASTExtension.semantic_kind
             clazz.properties = ASTExtension.ast_properties
             clazz.children = ASTExtension.ast_children
             clazz.signature = ASTExtension.ast_signature

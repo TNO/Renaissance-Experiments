@@ -1,32 +1,10 @@
 import pytest
-from hamcrest import assert_that, empty, has_length, instance_of, is_, is_in, is_not
+from hamcrest import assert_that, empty, has_length, is_, is_in, is_not
 
 from renaissance.integrations.python.ast.factory import PythonFactory, PythonPatternFactory
 from renaissance.integrations.python.ast.rst_node import PythonRstNode
-from renaissance.integrations.types import (
-    Assert,
-    Assign,
-    AugAssign,
-    Break,
-    ClassDef,
-    Continue,
-    ExpressionStatement,
-    For,
-    FunctionDef,
-    If,
-    Import,
-    Match,
-    MatchAll,
-    MatchOne,
-    Pass,
-    Raise,
-    Return,
-    TranslationUnit,
-    Try,
-    While,
-    With,
-)
 from renaissance.syntax_tree.match_finder import is_match
+from renaissance.syntax_tree.pattern_kind import PatternKind
 
 
 class TestPythonicStyle:
@@ -38,22 +16,22 @@ class TestPythonicStyle:
     @pytest.mark.parametrize(
         "raw, kind, op, name, expr, body_length",
         [
-            ("try:\n  pass\nfinally:\n  pass", Try, "try", "Try", "expr", 1),
-            ("try:\n  x()\nexcept* e:\n  pass", Try, "try", "Try", "expr", 1),
-            ("class name: pass", ClassDef, "class", "name", "expr", 1),
-            ("def name(): pass", FunctionDef, "function", "name", "expr", 1),
-            ("for name in expr:\n  1\n  2\n  pass", For, "for", "name", "expr", 3),
-            ("while expr: pass", While, "while", "While", "expr", 1),
-            ("if expr: pass\nelse: pass ", If, "if", "If", "expr", 1),
-            ("match x:\n  case _:    pass", Match, "match", "x", "expr", 1),
-            ("async for f in fs:  pass", For, "for", "f", "", 1),
-            ('async with open("x"): pass', With, "with", "With", "", 1),
-            ("async def fun(): pass", FunctionDef, "function", "fun", "", 1),
+            ("try:\n  pass\nfinally:\n  pass", "Try", "try", "Try", "expr", 1),
+            ("try:\n  x()\nexcept* e:\n  pass", "TryStar", "try", "TryStar", "expr", 1),
+            ("class name: pass", "ClassDef", "class", "name", "expr", 1),
+            ("def name(): pass", "FunctionDef", "function", "name", "expr", 1),
+            ("for name in expr:\n  1\n  2\n  pass", "For", "for", "name", "expr", 3),
+            ("while expr: pass", "While", "while", "While", "expr", 1),
+            ("if expr: pass\nelse: pass ", "If", "if", "If", "expr", 1),
+            ("match x:\n  case _:    pass", "Match", "match", "x", "expr", 1),
+            ("async for f in fs:  pass", "AsyncFor", "for", "f", "", 1),
+            ('async with open("x"): pass', "AsyncWith", "with", "AsyncWith", "", 1),
+            ("async def fun(): pass", "AsyncFunctionDef", "function", "fun", "", 1),
         ],
     )
     def test_consistent_name_stmt(self, raw, kind, op, name, expr, body_length):
         it = PythonRstNode.load_from_text(raw).body[-1]
-        assert_that(it.ast_type(), instance_of(kind))
+        assert_that(it.parser_kind, is_(kind))
         assert_that(it.operator, is_(op))
         if isinstance(it.name, str):
             assert_that(it.name, is_(name))
@@ -63,19 +41,19 @@ class TestPythonicStyle:
     @pytest.mark.parametrize(
         "raw, kind, typ, name, op, value",
         [
-            ("i:int=0", Assign, "int", "i", "=", 0),
-            ("i=0", Assign, None, "i", "=", 0),
-            ("x += 5", AugAssign, None, "x", "+=", 5),
-            ("break", Break, None, "", "break", None),
-            ("assert 0", Assert, None, "", "assert", 0),
-            ("continue", Continue, None, "", "continue", None),
-            ("import x", Import, None, "x", "import", None),
-            ("pass", Pass, None, "", "pass", None),
+            ("i:int=0", "AnnAssign", "int", "i", "=", 0),
+            ("i=0", "Assign", None, "i", "=", 0),
+            ("x += 5", "AugAssign", None, "x", "+=", 5),
+            ("break", "Break", None, "", "break", None),
+            ("assert 0", "Assert", None, "", "assert", 0),
+            ("continue", "Continue", None, "", "continue", None),
+            ("import x", "Import", None, "x", "import", None),
+            ("pass", "Pass", None, "", "pass", None),
         ],
     )
     def test_stmt(self, raw, kind, typ, name, op, value):
         it = PythonRstNode.load_from_text(raw).body[-1]
-        assert_that(it.ast_type(), instance_of(kind))
+        assert_that(it.parser_kind, is_(kind))
         assert_that(it.name, is_(name))
         assert_that(it.operator, op)
         assert_that(it.type, is_(typ))
@@ -84,15 +62,15 @@ class TestPythonicStyle:
     @pytest.mark.parametrize(
         "raw, kind, expr",
         [
-            ("fun()", ExpressionStatement, "fun()"),
-            ("return fun()", Return, "fun()"),
-            ("raise fun()", Raise, "fun()"),
+            ("fun()", "Expr", "fun()"),
+            ("return fun()", "Return", "fun()"),
+            ("raise fun()", "Raise", "fun()"),
         ],
     )
     # ('from x import y', 'ImportFrom', None, 'x', 'import', 'y'),
     def test_expr(self, raw, kind, expr):
         it = PythonRstNode.load_from_text(raw).body[-1]
-        assert_that(it.ast_type(), instance_of(kind))
+        assert_that(it.parser_kind, is_(kind))
         assert_that(it.expr.name, is_(expr))
 
     def test_ann_assign_node(self):
@@ -119,20 +97,20 @@ class TestPythonicStyle:
 
     def python_does_not_parse_dollar(self):
         it = PythonRstNode.load_from_text("$pa")
-        assert_that(it.ast_type, is_(MatchOne))
+        assert_that(it.pattern_kind, is_(PatternKind.MATCH_ONE))
 
     def python_does_not_parse_dollar_dollar(self):
         it = PythonRstNode.load_from_text("$$pa")
-        assert_that(it.ast_type, is_(MatchAll))
+        assert_that(it.pattern_kind, is_(PatternKind.MATCH_ALL))
 
     def test_kind_is_match_all(self):
         PythonPatternFactory(PythonFactory(PythonRstNode))
         simple = self.pattern_factory.create_statement("$$pa")
-        assert_that(simple.ast_type(), instance_of(MatchAll))
+        assert_that(simple.pattern_kind, is_(PatternKind.MATCH_ALL))
 
     def test_kind_is_match_one(self):
         simple = self.pattern_factory.create_statement("$pa")
-        assert_that(simple.ast_type(), instance_of(MatchOne))
+        assert_that(simple.pattern_kind, is_(PatternKind.MATCH_ONE))
 
     def test_match_one_is_not_equal(self):
         atu = self.factory.create_from_text("ba(55)\nca(555)\nlo(4444)\nna=55", "test.py")
@@ -193,7 +171,7 @@ class TestPythonicStyle:
             "ba(55)\nna(55)\nna(55)\npa(55)\npa(55)\nba(55)\nna(55)\nna(55)\nna=55",
             "test.py",
         )
-        assert_that(atu.ast_type(), instance_of(TranslationUnit))
+        assert_that(atu.parser_kind, is_("Module"))
 
     def test_property_name_call(self):
         atu = self.factory.create_from_text(

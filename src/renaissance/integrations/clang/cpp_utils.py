@@ -1,21 +1,11 @@
-from renaissance.integrations.types import DeclarationExpression, Literal, Type
+def matches_node_kind(mine, other) -> bool:
+    if mine.semantic_kind.value != "node" and other.semantic_kind.value != "node":
+        return mine.semantic_kind is other.semantic_kind
+    return mine.parser_kind == other.parser_kind
 
 
-def get_ancestor(node, kind: type[Type]):
-    parent = node.parent
-    if not parent:
-        return None
-    if isinstance(parent.ast_type(), kind):
-        return parent
-    return parent.get_ancestor(kind)
-
-
-def matches_kind(mine, other) -> bool:
-    return (
-        mine == other
-        or (isinstance(mine(), Literal) and isinstance(other(), DeclarationExpression))
-        or (isinstance(other(), Literal) and isinstance(mine(), DeclarationExpression))
-    )
+def is_clang_kind(node, *parser_kinds: str) -> bool:
+    return node.parser_kind in parser_kinds
 
 
 class CPPUtils:

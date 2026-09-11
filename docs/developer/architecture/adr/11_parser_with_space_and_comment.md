@@ -36,6 +36,13 @@ maintenance burden.
 
 ## Decision
 
+This ADR remains a proposal, not a delivered repository-wide capability.
+Python CST/RST integrations provide the strongest current basis for
+lossless source-preserving transformations. Other parser integrations still
+have backend-specific trivia, source-span, and rewrite behavior, so the
+requirements below describe the intended direction and must not be read as a
+guarantee that every current backend supports the same round-trip workflow.
+
 - Whitespace and comments must be preserved through the full parse → transform → unparse round-trip, producing
   output that is identical to the original source when no transformation is applied.
 - Comments and whitespace are made part of the AST node itself (as leading/trailing trivia attached to the node),

@@ -6,10 +6,13 @@ from typing import Protocol, Self, runtime_checkable
 
 from termcolor import colored
 
+from renaissance.utils.ast_utils import display_context
+
 
 @runtime_checkable
 class Displayable(Protocol):
-    ast_type: str
+    parser_kind: str
+    semantic_kind: object
     children: list[Self]
     is_implicit: bool
     show_props: bool
@@ -19,26 +22,27 @@ class ASTShower:
     focus: str = "NO-FOCUS-DEFINED"
 
     @staticmethod
-    def show_node(node, include_properties: bool = False) -> None:
-        print("\n" + ASTShower.get_node(node, include_properties))
+    def show_node(node, include_properties: bool = False, display_parser_kind: bool = False) -> None:
+        print("\n" + ASTShower.get_node(node, include_properties, display_parser_kind))
 
     @staticmethod
-    def show_nodes(ast_nodes: Sequence, include_properties: bool = False) -> None:
+    def show_nodes(ast_nodes: Sequence, include_properties: bool = False, display_parser_kind: bool = False) -> None:
         for ast_node in ast_nodes:
-            ASTShower.show_node(ast_node, include_properties)
+            ASTShower.show_node(ast_node, include_properties, display_parser_kind)
 
     @staticmethod
-    def get_node(ast_node: Displayable, include_properties: bool = False) -> str:
+    def get_node(ast_node: Displayable, include_properties: bool = False, display_parser_kind: bool = False) -> str:
         if isinstance(ast_node, Displayable):
             buffer = io.StringIO()
-            ASTShower._process_node(buffer, "", ast_node, include_properties)
+            with display_context(display_parser_kind):
+                ASTShower._process_node(buffer, "", ast_node, include_properties)
             return buffer.getvalue()
         return ""
 
     @staticmethod
-    def store_node(filename: str, ast_node: Displayable, include_properties: bool = False) -> None:
+    def store_node(filename: str, ast_node: Displayable, include_properties: bool = False, display_parser_kind: bool = False) -> None:
         with Path(filename).open("w") as f:
-            f.write(ASTShower.get_node(ast_node, include_properties))
+            f.write(ASTShower.get_node(ast_node, include_properties, display_parser_kind))
 
     @staticmethod
     def _process_node(output: StringIO, indent: str, node: Displayable, include_properties: bool) -> None:

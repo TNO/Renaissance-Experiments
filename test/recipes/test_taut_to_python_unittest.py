@@ -10,8 +10,8 @@ import test_data.test_code as tst_code
 import test_data.test_insert as tst_insert
 import test_data.test_testdoubles as tst_testdoubles
 from renaissance.integrations.python.ast.rst_node import PythonRstNode
-from renaissance.integrations.types import Name
 from renaissance.recipes.taut_to_python_unittest import TautToPythonUnittest
+from renaissance.syntax_tree.semantic_kind import SemanticKind
 from renaissance.utils.ast_utils import traverse
 
 
@@ -250,7 +250,7 @@ class TestTautToPythonUnittest:
         [
             subject.replace("self." + node.name, node, False, False)
             for node in traverse(subject.node)
-            if isinstance(node.ast_type(), Name) and node.name == "assert_double_equal"
+            if node.semantic_kind is SemanticKind.NAME and node.name == "assert_double_equal"
         ]
         result = subject.apply_to_string()
         assert_that(result, is_(expected_code))

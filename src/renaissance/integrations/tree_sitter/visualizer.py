@@ -17,7 +17,7 @@ class LstVisualizer:
     def _render_node(self, node):
         node_id = self._get_node_id(node)
         label = f"""\
-            {node_id}: {node.ast_type.__name__} {{
+            {node_id}: {node.semantic_kind} ({node.parser_kind}) {{
             offset: {node.offset}
             signature: {signature_to_id(node.signature)}
             }}"""

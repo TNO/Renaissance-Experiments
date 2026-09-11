@@ -10,26 +10,15 @@ from functools import cache
 from pathlib import Path
 from typing import Any, Self, override
 
-from renaissance.integrations.clang.cpp_utils import CPPUtils, matches_kind
-from renaissance.integrations.types import (
-    KIND_MAP,
-    Call,
-    Comment,
-    CompoundStatement,
-    Constructor,
-    ConstructorExpression,
-    DeclarationExpression,
-    FullComment,
-    MacroDef,
-    MatchAll,
-    MatchOne,
-    Namespace,
-    RecordDef,
-    Statement,
-    TranslationUnit,
-    UnknownType,
+from renaissance.integrations.clang.cpp_utils import CPPUtils, matches_node_kind
+from renaissance.integrations.clang.kinds import CLANG_KIND_MAP
+from renaissance.integrations.clang.predicates import (
+    is_clang_declaration_reference,
+    is_clang_kind,
 )
 from renaissance.syntax_tree import ASTNode, ASTReference
+from renaissance.syntax_tree.pattern_kind import PatternKind
+from renaissance.syntax_tree.semantic_kind import SemanticKind
 from renaissance.utils.ast_utils import match_children, match_props
 
 EMPTY_DICT = {}
@@ -45,9 +34,9 @@ ID_TAGS = [
     *ON_NODE_ID_TAGS,
 ]
 
-STMT_PARENTS = [CompoundStatement, TranslationUnit]
+STMT_PARENT_KINDS = {"CompoundStmt", "COMPOUND_STMT", "TranslationUnitDecl", "TRANSLATION_UNIT", "translation_unit"}
 IRRELEVANT_PROPS = {"macro_expansion", "start_point", "end_point", "source_code", "location", "type"}
-IRRELEVANT_NODES = {Comment, MacroDef, FullComment}
+IRRELEVANT_NODE_KINDS = {"comment", "Comment", "MacroDefinition", "MACRO_DEFINITION", "FullComment"}
 VERBOSE = False
 
 
@@ -114,7 +103,12 @@ class ClangJsonASTNode(ASTNode):
         self._end_offset = self._offset + length if length is not None else self.__derive_end_offset()
         self._length = self._end_offset - self._offset
         self._kind = insert_kind if insert_kind is not None else self.__derive_kind()
-        self.ast_type = KIND_MAP.get(self._kind, UnknownType)
+        self.parser_kind = self._kind
+        self.semantic_kind = CLANG_KIND_MAP.get(self.parser_kind, SemanticKind.NODE)
+        self.pattern_kind = {
+            "MatchOne": PatternKind.MATCH_ONE,
+            "MatchAll": PatternKind.MATCH_ALL,
+        }.get(self.parser_kind)
         self._name = insert_name if insert_name is not None else self._derive_name()
         # a fake child is introduced to handle the case where the type of declaration is not found
         # for example in the case of a base type.
@@ -156,13 +150,13 @@ class ClangJsonASTNode(ASTNode):
                     self.__inserted_children.append(insert_child)
             # add the declaration as node
             # deep clone the type node and remove the parentheses
-        elif self.ast_type in [DeclarationExpression]:
+        elif is_clang_declaration_reference(self):
             if self.name.startswith("$$"):
-                self._kind = MatchAll.__name__
-                self.ast_type = MatchAll
+                self._kind = "MatchAll"
+                self.pattern_kind = PatternKind.MATCH_ALL
             elif self.name.startswith("$"):
-                self._kind = MatchOne.__name__
-                self.ast_type = MatchOne
+                self._kind = "MatchOne"
+                self.pattern_kind = PatternKind.MATCH_ONE
         self._children = self.__inserted_children + [
             ClangJsonASTNode(
                 ClangJsonASTNode._remove_wrapper(n),
@@ -172,14 +166,14 @@ class ClangJsonASTNode(ASTNode):
             for n in self.node.get("inner", [])
             if not n.get("isImplicit", False)
         ]
-        self._children = [n for n in self._children if n.ast_type not in IRRELEVANT_NODES]
+        self._children = [n for n in self._children if n.parser_kind not in IRRELEVANT_NODE_KINDS]
 
     def __eq__(self, other):
         return (
             isinstance(other, type(self))
             and self.kind == other.kind
             and match_props(self.properties, other.properties, IRRELEVANT_PROPS)
-            and match_children(self.children, other.children, IRRELEVANT_NODES)
+            and match_children(self.children, other.children, IRRELEVANT_NODE_KINDS)
         )
 
     @override
@@ -293,7 +287,7 @@ class ClangJsonASTNode(ASTNode):
             end_offset = self._end_offset
             # "f(x,y);" and "a = f(3);" that are according to clang NOT statements,
             # but expressions (without the semicolon)
-            if (not self._is_statement_or_declaration()) and (self.parent and self.parent.ast_type in STMT_PARENTS):
+            if (not self._is_statement_or_declaration()) and (self.parent and self.parent.parser_kind in STMT_PARENT_KINDS):
                 content = self.root.binary_file_content()
                 while (
                     end_offset < len(content) and content[end_offset - 1] not in b";"
@@ -305,12 +299,12 @@ class ClangJsonASTNode(ASTNode):
 
     def _is_statement_or_declaration(self):
         return re.match("(?i).*(Stmt|Decl)", self.kind)
-        return isinstance(self.ast_type(), (Statement))
+        return self.semantic_kind in {SemanticKind.STATEMENT, SemanticKind.DECLARATION, SemanticKind.DEFINITION}
 
     @override
     @property
     def matches_kind(self, node: ASTNode) -> bool:
-        return matches_kind(self.ast_type, node.ast_type)
+        return matches_node_kind(self, node)
 
     @override
     @property
@@ -325,7 +319,7 @@ class ClangJsonASTNode(ASTNode):
         if self._get(["range", "end", "expansionLoc", "offset"], -1) != -1:  # dealing with a macro expansion
             properties["macro_expansion"] = self.text
         # matching name through props
-        if self.ast_type == DeclarationExpression:
+        if is_clang_declaration_reference(self):
             properties["name"] = self.name
 
         return properties
@@ -380,7 +374,7 @@ class ClangJsonASTNode(ASTNode):
     @property
     def is_statement(self) -> bool:
         return (
-            self.parent is not None and self.parent.ast_type in STMT_PARENTS
+            self.parent is not None and self.parent.parser_kind in STMT_PARENT_KINDS
         )  # TODO: Why look at the kind of your parent and not at your own kind?
 
     def _derive_name(self) -> str:
@@ -505,9 +499,9 @@ class ReferenceHelper:
             # add the node if it contains a reference for example in case of previousDecl
 
         # to make clang json compatible with clang python, we add the reference of the DeclRefExpr child to the CallExpr
-        if ast_node.ast_type == Call:
+        if ast_node.semantic_kind is SemanticKind.CALL:
             for n in ast_node.children:
-                if n.ast_type == DeclarationExpression:
+                if is_clang_declaration_reference(n):
                     ref_child = {
                         k: v for k, v in n.node.items() if not ReferenceHelper._is_child_node(k) and ClangJsonASTNode._is_reference(v)
                     }
@@ -581,24 +575,24 @@ class ReferenceHelper:
             qual_type = tp["qualType"]
             node_ids = []
             ctor_type = EMPTY_STR
-            if ast_node.ast_type == ConstructorExpression:
+            if is_clang_kind(ast_node, "CXXConstructExpr", "CXX_CONSTRUCT_EXPR"):
                 ctor_type = ast_node._get(["ctorType", "qualType"], EMPTY_STR)
 
             for node_id, node in ast_node.translation_unit._nodes.items():
-                if node.ast_type == RecordDef and node.name == qual_type:
+                if node.semantic_kind is SemanticKind.CLASS and node.name == qual_type:
                     parent = node.parent
                     matches = True
                     for ns in namespaces:
-                        if ns != parent.name or parent.ast_type != Namespace:
+                        if ns != parent.name or not is_clang_kind(parent, "NamespaceDecl", "NAMESPACE_DECL"):
                             matches = False
                         parent = parent.parent
                     if matches:
-                        node_ids.append((node.ast_type, node_id))
-                if ctor_type != EMPTY_STR and node.ast_type == Constructor:
+                        node_ids.append((node.parser_kind, node_id))
+                if ctor_type != EMPTY_STR and is_clang_kind(node, "CXXConstructorDecl", "CXX_CONSTRUCTOR"):
                     # link all matching
                     matches = node._get(["type", "qualType"], EMPTY_STR) == ctor_type
                     if matches:
-                        node_ids.append((node.ast_type, node_id))
+                        node_ids.append((node.parser_kind, node_id))
             return node_ids
         except Exception:
             pass

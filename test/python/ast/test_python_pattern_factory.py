@@ -1,34 +1,11 @@
 import pytest
-from hamcrest import assert_that, has_length, instance_of, is_, is_in
+from hamcrest import assert_that, has_length, is_, is_in
 
 from python.ast.factories import Factories
 from renaissance.integrations.python.ast.factory import PythonFactory, PythonPatternFactory
 from renaissance.integrations.python.ast.rst_node import PythonRstNode
-from renaissance.integrations.types import (
-    Assert,
-    Assign,
-    Break,
-    Call,
-    ClassDef,
-    Continue,
-    Del,
-    ExpressionStatement,
-    For,
-    FunctionDef,
-    If,
-    ImplicitNode,
-    ImportFrom,
-    Literal,
-    MatchAll,
-    MatchOne,
-    Number,
-    Pass,
-    Return,
-    Try,
-    While,
-    With,
-)
 from renaissance.syntax_tree.match_finder import match_pattern
+from renaissance.syntax_tree.pattern_kind import PatternKind
 
 
 class TestPythonFactory:
@@ -56,14 +33,14 @@ class TestPythonFactory:
     )
     def test_if_else(self, statement) -> None:
         node = PythonRstNode.load_from_text(statement).body[-1]
-        assert_that(node.ast_type(), is_(If))
+        assert_that(node.parser_kind, is_("If"))
         assert_that(node.signature, is_(statement))
 
     def test_import(self) -> None:
         statement = "from module import foo, bar"
 
         node = PythonRstNode.load_from_text(statement).body[-1]
-        assert_that(node.ast_type(), is_(ImportFrom))
+        assert_that(node.parser_kind, is_("ImportFrom"))
         assert_that(node.signature, is_(statement))
         assert_that(node.properties["module"], is_("module"))
 
@@ -80,7 +57,7 @@ class TestPythonFactory:
     def test_try_statement(self, statement) -> None:
         pattern_factory = PythonPatternFactory(self.factory)
         node = pattern_factory.create_statement(statement)
-        assert_that(node.ast_type(), is_(Try))
+        assert_that(node.parser_kind, is_("Try"))
         assert_that(node.signature, is_(statement))
 
     @pytest.mark.parametrize(
@@ -94,7 +71,7 @@ class TestPythonFactory:
     def test_for_loop(self, statement) -> None:
         pattern_factory = PythonPatternFactory(self.factory)
         node = pattern_factory.create_statement(statement)
-        assert_that(node.ast_type(), is_(For))
+        assert_that(node.parser_kind, is_("For"))
         assert_that(node.signature, is_(statement))
 
     @pytest.mark.parametrize(
@@ -107,7 +84,7 @@ class TestPythonFactory:
     def test_while_loop(self, statement) -> None:
         pattern_factory = PythonPatternFactory(self.factory)
         node = pattern_factory.create_statement(statement)
-        assert_that(node.ast_type(), is_(While))
+        assert_that(node.parser_kind, is_("While"))
         assert_that(node.signature, is_(statement))
 
     @pytest.mark.parametrize(
@@ -120,7 +97,7 @@ class TestPythonFactory:
     def test_with_statement(self, statement) -> None:
         pattern_factory = PythonPatternFactory(self.factory)
         node = pattern_factory.create_statement(statement)
-        assert_that(node.ast_type(), is_(With))
+        assert_that(node.parser_kind, is_("With"))
         assert_that(node.signature, is_(statement))
 
     @pytest.mark.parametrize(
@@ -134,7 +111,7 @@ class TestPythonFactory:
     def test_func_def(self, code) -> None:
         pattern_factory = PythonPatternFactory(self.factory)
         node = pattern_factory.create_statement(code)
-        assert_that(node.ast_type(), is_(FunctionDef))
+        assert_that(node.parser_kind, is_("FunctionDef"))
         assert_that(node.signature, is_(code))
 
     @pytest.mark.parametrize(
@@ -148,7 +125,7 @@ class TestPythonFactory:
     def test_class_def(self, code) -> None:
         pattern_factory = PythonPatternFactory(self.factory)
         node = pattern_factory.create_statement(code)
-        assert_that(node.ast_type(), is_(ClassDef))
+        assert_that(node.parser_kind, is_("ClassDef"))
         assert_that(node.signature, is_(code))
 
     @pytest.mark.parametrize(
@@ -162,7 +139,7 @@ class TestPythonFactory:
     def test_return_statement(self, code) -> None:
         pattern_factory = PythonPatternFactory(self.factory)
         node = pattern_factory.create_statement(code)
-        assert_that(node.ast_type(), instance_of(Return))
+        assert_that(node.parser_kind, is_("Return"))
         assert_that(node.signature, is_(code))
 
     @pytest.mark.parametrize(
@@ -179,7 +156,7 @@ class TestPythonFactory:
         """
         pattern_factory = PythonPatternFactory(self.factory)
         node = pattern_factory.create_statement(code)
-        assert_that(node.ast_type(), instance_of(Assert))
+        assert_that(node.parser_kind, is_("Assert"))
         assert_that(node.signature, is_(code))
 
     @pytest.mark.parametrize(
@@ -192,28 +169,28 @@ class TestPythonFactory:
     def test_delete_statement(self, code) -> None:
         pattern_factory = PythonPatternFactory(self.factory)
         node = pattern_factory.create_statement(code)
-        assert_that(node.ast_type(), instance_of(Del))
+        assert_that(node.parser_kind, is_("Delete"))
         assert_that(node.signature, is_(code))
 
     def test_pass(self) -> None:
         code = "pass"
         pattern_factory = PythonPatternFactory(self.factory)
         node = pattern_factory.create_statement(code)
-        assert_that(node.ast_type(), instance_of(Pass))
+        assert_that(node.parser_kind, is_("Pass"))
         assert_that(node.signature, is_(code))
 
     def test_break_statement(self) -> None:
         code = "break"
         pattern_factory = PythonPatternFactory(self.factory)
         node = pattern_factory.create_statement(code)
-        assert_that(node.ast_type(), instance_of(Break))
+        assert_that(node.parser_kind, is_("Break"))
         assert_that(node.signature, is_(code))
 
     def test_cont_statement(self) -> None:
         code = "continue"
         pattern_factory = PythonPatternFactory(self.factory)
         node = pattern_factory.create_statement(code)
-        assert_that(node.ast_type(), instance_of(Continue))
+        assert_that(node.parser_kind, is_("Continue"))
         assert_that(node.signature, is_(code))
 
     ### Expressions patterns
@@ -227,7 +204,7 @@ class TestPythonFactory:
     def test_variable(self, code) -> None:
         pattern_factory = PythonPatternFactory(self.factory)
         node = pattern_factory.create_statement(code)
-        assert_that(node.ast_type(), is_(ExpressionStatement))
+        assert_that(node.parser_kind, is_("Expr"))
         assert_that(node.signature, is_(code))
 
     @pytest.mark.parametrize(
@@ -250,7 +227,7 @@ class TestPythonFactory:
     def test_expr(self, code) -> None:
         pattern_factory = PythonPatternFactory(self.factory)
         node = pattern_factory.create_statement(code)
-        assert_that(node.ast_type(), is_(ExpressionStatement))
+        assert_that(node.parser_kind, is_("Expr"))
         assert_that(node.signature, is_(code))
 
     @pytest.mark.parametrize("code", ["\"hello = 'hello' # comment to hello\""])
@@ -258,13 +235,13 @@ class TestPythonFactory:
         """TODO: what is tested?"""
         pattern_factory = PythonPatternFactory(self.factory)
         node = pattern_factory.create_statement(code)
-        assert_that(node.ast_type(), instance_of(ExpressionStatement))
+        assert_that(node.parser_kind, is_("Expr"))
         assert_that(node.signature, is_(code))
 
     def test_decorators(self) -> None:
         pattern_factory = PythonPatternFactory(self.factory)
         node = pattern_factory.create_decorators("@parameterized.expand($exp)").node
-        assert_that(node.ast_type(), is_(ImplicitNode))
+        assert_that(node.parser_kind, is_("ImplicitNode"))
         assert_that(node.name, is_("decorator_list"))
 
     @pytest.mark.skip
@@ -287,19 +264,19 @@ class TestPythonFactory:
         "_, factory, raw, expected",
         Factories.extend(
             [
-                ("a = 1", [Number, Assign, Literal, "Name", "AssignTarget"]),
+                ("a = 1", ["Number", "Assign", "Literal", "Name", "AssignTarget", "Constant", "Integer", "assignment"]),
             ],
         ),
     )
     def test_misalignment(self, _, factory, raw, expected) -> None:
         pattern_factory = PythonPatternFactory(factory)
         expression = pattern_factory.create_expression(raw)
-        assert_that(expression.ast_type, is_in(expected))
+        assert_that(expression.parser_kind, is_in(expected))
 
     def test_function_with_multi_patterns(self):
         pattern = self.pattern_factory.create_expression("$f($$before, $a, $$after)")
-        assert_that(pattern.ast_type(), Call)
-        assert_that(pattern.children[0].ast_type(), is_(MatchOne))
-        assert_that(pattern.children[1].children[0].ast_type(), is_(MatchAll))
-        assert_that(pattern.children[1].children[1].ast_type(), is_(MatchOne))
-        assert_that(pattern.children[1].children[2].ast_type(), is_(MatchAll))
+        assert_that(pattern.parser_kind, is_("Call"))
+        assert_that(pattern.children[0].pattern_kind, is_(PatternKind.MATCH_ONE))
+        assert_that(pattern.children[1].children[0].pattern_kind, is_(PatternKind.MATCH_ALL))
+        assert_that(pattern.children[1].children[1].pattern_kind, is_(PatternKind.MATCH_ONE))
+        assert_that(pattern.children[1].children[2].pattern_kind, is_(PatternKind.MATCH_ALL))
