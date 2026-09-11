@@ -1,15 +1,19 @@
 from pathlib import Path
 
-import networkx
+import networkx as nx
 
 from renaissance.integrations.tree_sitter.adapter import TreeSitterAdapter
 from renaissance.integrations.tree_sitter.factory import TreeSitterPatternFactory
-from renaissance.integrations.types import Call, FunctionDef
 from renaissance.syntax_tree import PatternMatch
 from renaissance.syntax_tree.match_finder import match_pattern
+from renaissance.syntax_tree.semantic_kind import SemanticKind
 
 GRAPHML_DIR = "out_graphml"
 Path(GRAPHML_DIR).mkdir(parents=True, exist_ok=True)
+
+
+def _has_semantic_kind(node, kind: SemanticKind) -> bool:
+    return node.semantic_kind is kind
 
 
 class Extractor:
@@ -31,7 +35,7 @@ class BaseCodeGraphExtractor:
         self.language = language
         self.lib_path = lib_path
         self.adapter = TreeSitterAdapter(lib_path)
-        self.graph = networkx.DiGraph()
+        self.graph = nx.DiGraph()
 
     def extract(self, files):
         for f in files:
@@ -48,7 +52,7 @@ class BaseCodeGraphExtractor:
 
     def save_graph(self, filename: str):
         path = Path(GRAPHML_DIR) / filename
-        networkx.write_graphml(self.graph, path)
+        nx.write_graphml(self.graph, path)
         print(f"Graph saved to: {path}")
 
 
@@ -60,12 +64,12 @@ class PythonCodeGraphExtractor(BaseCodeGraphExtractor):
         self.graph.add_edge(folder, file_path, type="contains")
 
         for node in lst.traverse():
-            if node.ast_type == FunctionDef:
+            if _has_semantic_kind(node, SemanticKind.FUNCTION):
                 name = node.signature.split("(")[0].split()[-1]
                 self.graph.add_node(name, type="function", file=file_path)
                 self.graph.add_edge(file_path, name, type="defines")
 
-            elif node.ast_type == Call:
+            elif _has_semantic_kind(node, SemanticKind.CALL):
                 call_target = node.signature.strip().split("(")[0]
                 self.graph.add_node(call_target, type="call_target")
                 self.graph.add_edge(file_path, call_target, type="calls")
@@ -79,12 +83,12 @@ class JavaCodeGraphExtractor(BaseCodeGraphExtractor):
         self.graph.add_edge(folder, file_path, type="contains")
 
         for node in lst.traverse():
-            if node.ast_type == FunctionDef:
+            if _has_semantic_kind(node, SemanticKind.FUNCTION):
                 name = node.properties.get("name", "method")
                 self.graph.add_node(name, type="method", file=file_path)
                 self.graph.add_edge(file_path, name, type="defines")
 
-            elif node.ast_type == Call:
+            elif _has_semantic_kind(node, SemanticKind.CALL):
                 target = node.signature.strip().split("(")[0]
                 self.graph.add_node(target, type="method_target")
                 self.graph.add_edge(file_path, target, type="calls")
@@ -98,12 +102,12 @@ class CppCodeGraphExtractor(BaseCodeGraphExtractor):
         self.graph.add_edge(folder, file_path, type="contains")
 
         for node in lst.traverse():
-            if node.ast_type == FunctionDef:
+            if _has_semantic_kind(node, SemanticKind.FUNCTION):
                 name = node.properties.get("name", "func")
                 self.graph.add_node(name, type="function", file=file_path)
                 self.graph.add_edge(file_path, name, type="defines")
 
-            elif node.ast_type == Call:
+            elif _has_semantic_kind(node, SemanticKind.CALL):
                 call_expr = node.signature.strip().split("(")[0]
                 self.graph.add_node(call_expr, type="call_target")
                 self.graph.add_edge(file_path, call_expr, type="calls")

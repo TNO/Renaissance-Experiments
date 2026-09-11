@@ -6,7 +6,7 @@ from more_itertools import last
 
 from renaissance.integrations.clang import ClangASTNode, CPPPatternFactory
 from renaissance.integrations.clang.clang_json_ast_node import ClangJsonASTNode
-from renaissance.integrations.types import Constructor, Method, TypeReference
+from renaissance.integrations.clang.predicates import is_clang_constructor, is_clang_method, is_clang_type_reference
 from renaissance.syntax_tree import (
     ASTFactory,
     ASTNode,
@@ -16,7 +16,7 @@ from renaissance.syntax_tree import (
     TextUtils,
     recipe_step,
 )
-from renaissance.syntax_tree.ast_finder import matches_kind
+from renaissance.syntax_tree.ast_finder import matches_node
 
 example_1 = textwrap.dedent("""
 #include <vector>
@@ -225,8 +225,8 @@ class MyRefactor:
     def recipe(self, ast_processor: ASTProcessor):
         pattern = CPPPatternFactory(ast_processor.factory)
         actions = ASTRefactorActions(ast_processor, pattern)
-        actions.replace_text("ListView_LEGACY", "ListViewCustom", skip_kind=TypeReference)
-        actions.replace_name("another_func", "__REPLACEMENT__", Method)
+        actions.replace_text("ListView_LEGACY", "ListViewCustom", skip_kind=is_clang_type_reference)
+        actions.replace_name("another_func", "__REPLACEMENT__", is_clang_method)
         actions.replace_text("idToBeReplaced", "NEW_ID")
         # TODO debate the way to replace this the options are:
         # 1. make a match of the consecutive nodes.
@@ -252,7 +252,7 @@ class MyRefactor:
                 # but currently (I guess) that would lead to a dangling comma
                 # TODO the items between the backtick represent a regex where all groups are the used replacements
                 # this might need some investigation what is the best way to handle this
-                if matches_kind(parent, Constructor):
+                if matches_node(parent, is_clang_constructor):
                     # remove constructor header count argument
                     ast_processor.replace(r"ListViewCustom($container)", constructor_call)
                     repl = ",\n    ".join("std:make_unique<ListViewHeader>(*this)" for _ in range(header_count))

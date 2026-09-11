@@ -1,8 +1,11 @@
 from collections.abc import Iterable, Sequence
-from typing import Protocol, Self, runtime_checkable
+from typing import Self
 
-from renaissance.integrations.types import MatchAll, MatchOne, Type
 from renaissance.utils.ast_utils import use_dollar
+
+from .node_protocol import NodeProtocol
+from .pattern_kind import PatternKind
+from .semantic_kind import SemanticKind
 
 IRRELEVANT_PROPS = {"macro_expansion", "start_point", "end_point", "source_code", "location", "type"}
 
@@ -11,13 +14,26 @@ INCOMPLETE_MATCH = -11
 _TOP_LEVEL_KINDS = {"Module", "TRANSLATION_UNIT"}
 
 
-@runtime_checkable
-class AstProtocol(Protocol):
-    ast_type: type[Type]
-    properties: dict
-    children: list[Self]
-    signature: str
-    name: str
+def pattern_kind(node: NodeProtocol) -> PatternKind | None:
+    value = getattr(node, "pattern_kind", None)
+    if value is not None:
+        return value
+    if node.parser_kind in {"MatchOne", "_MatchOne__"}:
+        return PatternKind.MATCH_ONE
+    if node.parser_kind in {"MatchAll", "_MatchAll__"}:
+        return PatternKind.MATCH_ALL
+    return None
+
+
+def node_kinds_match(source: NodeProtocol, pattern: NodeProtocol) -> bool:
+    if (
+        source.semantic_kind is not None
+        and pattern.semantic_kind is not None
+        and source.semantic_kind is not SemanticKind.NODE
+        and pattern.semantic_kind is not SemanticKind.NODE
+    ):
+        return source.semantic_kind == pattern.semantic_kind
+    return source.parser_kind == pattern.parser_kind
 
 
 class Variant:
@@ -57,7 +73,7 @@ class PatternMatch:
         return str(self)
 
     def __getitem__(self, key):
-        return "\n".join(node.signature if isinstance(node, AstProtocol) else node for node in self.expansions[key])
+        return "\n".join(node.signature if isinstance(node, NodeProtocol) else node for node in self.expansions[key])
 
     def match_referenced_by(self, patterns: Sequence[list], recursive: bool = True) -> Sequence[Self]:
         return self._match_relations("referenced_by", patterns, recursive)
@@ -81,7 +97,7 @@ class PatternMatch:
         return self.expansions[key][-1].offset + self.expansions[key][-1].length - self.expansions[key][0].offset
 
 
-def _resolve_match_one(name: str, src: AstProtocol, expansions: dict):
+def _resolve_match_one(name: str, src: NodeProtocol, expansions: dict):
     """Handle a MATCH_ONE pattern node: bind or verify the named expansion. Returns True if matched."""
     if name in expansions:
         return src == expansions[name][0]
@@ -93,11 +109,11 @@ def is_match_tree(src: Sequence | None, cmp: Sequence | None, expansions=None):
     return find_in_list(src, cmp, expansions, 0) == len(src) - 1
 
 
-def variant_in_match_stmt(src: AstProtocol, cmp: AstProtocol, expansions) -> list:
-    if cmp.ast_type == MatchOne and cmp.name:
+def variant_in_match_stmt(src: NodeProtocol, cmp: NodeProtocol, expansions) -> list:
+    if pattern_kind(cmp) is PatternKind.MATCH_ONE and cmp.name:
         matched = _resolve_match_one(cmp.name, src, expansions)
         return [Variant(0, expansions, None, 0, 0)] if matched else []
-    if is_match_dict(src.properties, cmp.properties, expansions) and src.ast_type == cmp.ast_type:
+    if is_match_dict(src.properties, cmp.properties, expansions) and node_kinds_match(src, cmp):
         if not cmp.children and src.children:
             return []
         variants = find_variants(src.children, cmp.children, expansions)
@@ -107,7 +123,7 @@ def variant_in_match_stmt(src: AstProtocol, cmp: AstProtocol, expansions) -> lis
 
 def _advance_match_all(variant: Variant, cmp: Sequence, src: Sequence, i: int, new_variants: list):
     """Advance variant.index past consecutive MATCH_ALL pattern nodes, forking new_variants as needed."""
-    while cmp[variant.index].ast_type == MatchAll:
+    while pattern_kind(cmp[variant.index]) is PatternKind.MATCH_ALL:
         current_name = cmp[variant.index].name
         if variant.expansion_start == -1:
             variant.expansion_start = i
@@ -136,8 +152,7 @@ def _apply_child_match(variant: Variant, child_variants: list, cmp: Sequence, sr
         new_variants.append(forked)
         variant.close_greedy(variant.greedy, src, variant.expansion_start, i)
     if len(child_variants) > 1:
-        for v in child_variants:
-            new_variants.append(Variant(variant.index + 1, v.exp, variant.greedy, variant.expansion_start))
+        new_variants.extend(Variant(variant.index + 1, v.exp, variant.greedy, variant.expansion_start) for v in child_variants)
         variant.end_index = MIS_MATCH
     else:
         variant.exp = child_variants[0].exp
@@ -192,7 +207,7 @@ def find_variants(src: Sequence, cmp: Sequence, expansion=None, start: int = 0, 
             if variant.index == len(cmp):
                 next_variants.append(variant)
                 continue
-            if cmp[variant.index].ast_type != MatchAll and (
+            if pattern_kind(cmp[variant.index]) is not PatternKind.MATCH_ALL and (
                 child_variants := variant_in_match_stmt(src[i], cmp[variant.index], variant.exp)
             ):
                 _apply_child_match(variant, child_variants, cmp, src, i, next_variants)
@@ -212,7 +227,7 @@ def find_variants(src: Sequence, cmp: Sequence, expansion=None, start: int = 0, 
             continue
         if variant.index == len(cmp) - 1:
             last_cmp = cmp[variant.index]
-            trailing_wildcard = last_cmp.ast_type == MatchAll and last_cmp.name not in variant.exp
+            trailing_wildcard = pattern_kind(last_cmp) is PatternKind.MATCH_ALL and last_cmp.name not in variant.exp
             if not trailing_wildcard:
                 continue
             key = variant.greedy if variant.expansion_start != -1 else last_cmp.name
@@ -239,7 +254,7 @@ def find_in_list(src: Sequence, cmp: Sequence, exp=None, start: int = 0):
     return variants[0].end_index
 
 
-def is_match(src: AstProtocol, cmp: AstProtocol, expansions=None) -> bool:
+def is_match(src: NodeProtocol, cmp: NodeProtocol, expansions=None) -> bool:
     return variant_in_match_stmt(src, cmp, expansions) != []
 
 
@@ -280,8 +295,8 @@ def find_all(src_nodes, *patterns, recursive: bool = True) -> Sequence[PatternMa
 class MatchFinder:
     @staticmethod
     def find_all(
-        src_nodes: Sequence[AstProtocol],
-        *patterns: Sequence[AstProtocol],
+        src_nodes: Sequence[NodeProtocol],
+        *patterns: Sequence[NodeProtocol],
         recursive: bool = True,
     ) -> Sequence[PatternMatch]:
         """Finds all pattern matches in the given source nodes."""
@@ -289,8 +304,8 @@ class MatchFinder:
 
     @staticmethod
     def match_pattern(
-        src_nodes: Sequence[AstProtocol],
-        patterns: Sequence[AstProtocol],
+        src_nodes: Sequence[NodeProtocol],
+        patterns: Sequence[NodeProtocol],
         recursive: bool = True,
     ) -> Sequence[PatternMatch]:
         """Matches source nodes against a list of pattern nodes, optionally recursing into children."""

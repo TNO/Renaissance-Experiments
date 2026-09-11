@@ -1,7 +1,8 @@
 import sys
 from typing import Any, Self, cast
 
-from renaissance.integrations.types import KIND_MAP, UnknownType
+from renaissance.integrations.tree_sitter.kinds import TREE_SITTER_KIND_MAP
+from renaissance.syntax_tree.semantic_kind import SemanticKind
 from renaissance.utils.ast_utils import format_node, match_children, match_props, next_sibling, preceding_sibling
 
 IRRELEVANT_PROPS = {"source_code", "end_point", "start_point", "location", "type"}
@@ -27,9 +28,8 @@ class LSTNode:
         if node_type == "string" and signature.startswith("f"):
             node_type = "FormattedString"
 
-        self.ast_type = KIND_MAP.get(node_type, UnknownType)
-        if self.ast_type == UnknownType:
-            print(f'"{node_type}": {node_type},')
+        self.parser_kind = node_type
+        self.semantic_kind = TREE_SITTER_KIND_MAP.get(node_type, SemanticKind.NODE)
 
         self.is_implicit = True
         self.show_props = False
@@ -47,16 +47,20 @@ class LSTNode:
         self.end_offset = self.offset + self.length
         self.extended_end_offset = self.end_offset
 
+    @property
+    def kind_key(self) -> SemanticKind | str:
+        return self.semantic_kind if self.semantic_kind is not SemanticKind.NODE else self.parser_kind
+
     def __eq__(self, other):
         return (
             isinstance(other, type(self))
-            and self.ast_type == other.ast_type
+            and self.kind_key == other.kind_key
             and match_props(self.properties, other.properties, IRRELEVANT_PROPS)
             and match_children(self.children, other.children, IRRELEVANT_NODE)
         )
 
     def __hash__(self):
-        return hash((self.ast_type.__name__, frozenset(self.properties.items()), tuple(self.children)))
+        return hash((self.kind_key, frozenset(self.properties.items()), tuple(self.children)))
 
     def match_props(self, properties) -> bool:
         all_keys = (self.properties.keys() | properties.keys()) - IRRELEVANT_PROPS
@@ -87,7 +91,7 @@ class LSTNode:
 
     @property
     def node(self):
-        return self.ast_type()
+        return self
 
     def __repr__(self):
         return format_node(self)

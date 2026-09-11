@@ -1,3 +1,8 @@
+## Breaking changes
+
+- Removed the nominal AST hierarchy in `renaissance.integrations.types`, including `ast_type`, `KIND_MAP`, and class-based kind finder APIs.
+- Use `NodeProtocol`, `SemanticKind`, `PatternKind`, `parser_kind`, and parser-local predicates instead.
+
 Plan for next sprints:
 
 

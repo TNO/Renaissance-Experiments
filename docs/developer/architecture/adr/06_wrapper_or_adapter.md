@@ -1,6 +1,6 @@
 # 06 - Wrapper or adapter for external node shapes
 
-Status: Proposal
+Status: Accepted
 
 Date: 2026-02-25
 
@@ -37,6 +37,28 @@ and expectations unig minimum amount of code.
 Prefer writing only the protocol function on top of the current native implementation if not already available.
 This requires a minimum amount of implementation and opportunity for reuse of the matcher and rewrite
 functionalities.
+
+The adapter is the parser integration boundary. It exposes `NodeProtocol`,
+preserves exact `parser_kind`, assigns shared `semantic_kind` values through a
+parser-local map, and keeps parser-only concepts behind parser-local
+predicates. `semantic_kind` is an optional convenience for broad searches,
+diagnostics, and cross-adapter tests; it does not make language-specific
+recipes or replacement text portable. Generic mechanisms must not depend on
+parser classes or a shared nominal AST hierarchy.
+
+The shared `ASTRewriter` accepts nodes with its separate `Rewritable` shape:
+`parent`, `offset`, `end_offset`, `extended_end_offset`, `filename`, and
+`text`. This allows one rewrite implementation to work with compatible
+adapters. `NodeProtocol` supplies generic traversal and matching; it does not
+by itself make a node rewriteable. Adapters may provide root and sibling
+navigation helpers for their own recipes.
+
+Current integrations still provide parsing, source-span and trivia semantics,
+and reparsing through adapter-specific implementations. This is intentional:
+the protocols describe the data consumed by shared Renaissance facilities, not
+how an adapter must implement its parser lifecycle. Reference and data-flow
+information is an additional parser capability, not a requirement of every
+integration.
 
 Thin wrappers (adapter objects) that present the project's canonical node API while delegating to the original
 node make behavior explicit, allow normalization, and preserve access to the original node when necessary.

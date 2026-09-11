@@ -5,9 +5,10 @@ from collections.abc import Callable, Sequence
 from pathlib import Path
 from typing import Any, Self
 
+from renaissance.integrations.python.ast.kinds import PYTHON_KIND_MAP, PYTHON_OPERATOR_MAP
 from renaissance.integrations.python.ast.util import convert
-from renaissance.integrations.types import KIND_MAP, OPERATOR_MAP, Assert, FunctionDef, Global, ImplicitNode, Tuple, UnknownType
 from renaissance.syntax_tree.match_finder import find_in_list
+from renaissance.syntax_tree.semantic_kind import SemanticKind
 from renaissance.utils.ast_utils import (
     format_node,
     match_children,
@@ -20,7 +21,7 @@ from renaissance.utils.ast_utils import (
 types = ["int", "float", "str", "list", "set", "tuple", "Mapping", "dict", "Optional"]
 IRRELEVANT_PROPS = {"comment"}
 IRRELEVANT_NODES = {"comment"}
-IMPLICIT = [ImplicitNode]
+IMPLICIT = {"ImplicitNode"}
 
 
 class ImplicitNode(ast.Name):
@@ -85,7 +86,7 @@ class PythonRstTranslationUnit:
         self.references_initialized = True
 
     def add(self, node):
-        match node.ast_type.__name__:
+        match node.parser_kind:
             case "Name":
                 if node.node.id not in self._nodes and node.node.id not in types:
                     self._nodes[node.node.id] = node
@@ -153,7 +154,7 @@ class PythonRstTranslationUnit:
                         self.add_reference(node_id, ref_id, ref_kind)
                     # call function 'a' in function 'b', then 'b' refers to 'a'
                     container = ast_node.get_container_parent()
-                    if container.ast_type == FunctionDef and isinstance(ast_node.node.func, ast.Name):
+                    if container.parser_kind in {"FunctionDef", "AsyncFunctionDef"} and isinstance(ast_node.node.func, ast.Name):
                         node_id = container.name
                         ref_id = ast_node.node.func.id
                         ref_kind = "FuncCall"
@@ -189,16 +190,15 @@ class PythonRstNode:
         self.node = node
         self.parent = parent
         self.translation_unit: PythonRstTranslationUnit = translation_unit
-        self.ast_type = KIND_MAP.get(type(node).__name__, UnknownType)
-        if self.ast_type == UnknownType:
-            print(f'"{type(node).__name__}": {type(node).__name__},')
+        self.parser_kind = type(node).__name__
+        self.semantic_kind = PYTHON_KIND_MAP.get(self.parser_kind, SemanticKind.NODE)
 
         self.indent = ""
         self.name = self._derive_name()
         self.show_props = False
         self.children = []
         self.properties = {}
-        self.is_implicit = self.ast_type not in IMPLICIT
+        self.is_implicit = self.parser_kind not in IMPLICIT
         self.offset = 0
         self.length = 0
         if self.translation_unit:
@@ -210,7 +210,7 @@ class PythonRstNode:
                 child = getattr(node, name)
                 match child:
                     case list():  # Matches any list
-                        if isinstance(node, Global) and name == "names":
+                        if isinstance(node, ast.Global) and name == "names":
                             if len(child) == 1:
                                 self.name = child[0]
                             if name == "body":
@@ -243,10 +243,14 @@ class PythonRstNode:
         self.extended_end_offset = self.end_offset
         self.is_statement = isinstance(self.node, ast.stmt)
 
+    @property
+    def kind_key(self) -> SemanticKind | str:
+        return self.semantic_kind if self.semantic_kind is not SemanticKind.NODE else self.parser_kind
+
     def __eq__(self, other):
         return (
             isinstance(other, type(self))
-            and self.ast_type == other.ast_type
+            and self.kind_key == other.kind_key
             and match_props(self.properties, other.properties, IRRELEVANT_PROPS)
             and match_children(self.children, other.children, IRRELEVANT_NODES)
         )
@@ -346,7 +350,7 @@ class PythonRstNode:
             name = self.node.target.id
         elif isinstance(self.node, ast.Assign) and len(self.node.targets) == 1:
             target = self.node.targets[0]
-            name = target.id if isinstance(target, ast.Name) else self.ast_type.__name__
+            name = target.id if isinstance(target, ast.Name) else self.parser_kind
         elif isinstance(self.node, ast.Name):
             name = self.node.id
         elif isinstance(self.node, ast.arg):
@@ -360,8 +364,8 @@ class PythonRstNode:
         elif isinstance(self.node, (ast.Assert, ast.Break, ast.Pass, ast.Raise, ast.Continue)):
             name = ""
         elif isinstance(self.node, (ast.For, ast.AsyncFor)):
-            if isinstance(self.node.target, Tuple):
-                name = self.node.target.dims[1].id
+            if isinstance(self.node.target, ast.Tuple) and len(self.node.target.elts) > 1:
+                name = self.node.target.elts[1].id
             elif isinstance(self.node.target, ast.Name):
                 name = self.node.target.id
             else:
@@ -371,7 +375,7 @@ class PythonRstNode:
         elif isinstance(self.node, (ast.Module)) and self.translation_unit:
             name = self.translation_unit.file_name
         else:
-            name = self.ast_type.__name__
+            name = self.parser_kind
         return name or ""
 
     @property
@@ -380,7 +384,7 @@ class PythonRstNode:
 
     @property
     def value(self):
-        if self.ast_type == Assert:
+        if self.parser_kind == "Assert":
             return 0
         return self.node.value.value if hasattr(self.node, "value") else None
 
@@ -415,7 +419,7 @@ class PythonRstNode:
     def operator(self):
         node_type = type(self.node).__name__
         op = type(self.node.op).__name__ if isinstance(self.node, (ast.BinOp, ast.UnaryOp, ast.BoolOp, ast.AugAssign)) else ""
-        return OPERATOR_MAP.get(node_type + op, "")
+        return PYTHON_OPERATOR_MAP.get(node_type + op, "")
 
     @property
     def signature(self) -> str:
@@ -446,7 +450,7 @@ class PythonRstNode:
 
     def get_container_parent(self):
         if self.parent:
-            if self.parent.ast_type.__name__ in ["FunctionDef", "ClassDef", "Module"]:
+            if self.parent.parser_kind in {"FunctionDef", "AsyncFunctionDef", "ClassDef", "Module"}:
                 return self.parent
             return self.parent.get_container_parent()
         return self

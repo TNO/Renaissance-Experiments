@@ -9,9 +9,8 @@ from more_itertools import flatten
 from renaissance.common import Rewriter
 from renaissance.utils.text_utils import TextUtils
 
-from ..integrations.types import CompoundStatement
-from .ast_finder import ASTFinder
 from .match_finder import PatternMatch
+from .semantic_kind import SemanticKind
 
 
 @runtime_checkable
@@ -625,7 +624,7 @@ class _RewriteActions:
         depth = 0
         parent = node.parent
         while parent:
-            if ASTFinder.matches_kind(parent, CompoundStatement):
+            if parent.semantic_kind is SemanticKind.STATEMENT or parent.parser_kind in {"CompoundStmt", "COMPOUND_STMT"}:
                 depth += 1
             parent = parent.parent
         return depth

@@ -206,7 +206,7 @@ Negative:
 ## Related decisions
 
 - See ADR 09 (Property-based tests) for the use of Hypothesis alongside pytest.
-- See ADR 10 (Type hierarchy) for the `SyntacticKind` taxonomy referenced in find-functionality tests.
+- See ADR 03 (Duck typing for nodes) and the shared `SemanticKind` vocabulary for kind-based matching.
 - See ADR 12 (Patterns are not nodes) for the `Pattern` type used in matching tests.
 
 ---

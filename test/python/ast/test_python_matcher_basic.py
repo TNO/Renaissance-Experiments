@@ -4,7 +4,7 @@ import pytest
 
 from renaissance.integrations.python.ast.factory import PythonFactory, PythonPatternFactory
 from renaissance.integrations.python.ast.rst_node import PythonRstNode
-from renaissance.syntax_tree.match_finder import AstProtocol
+from renaissance.syntax_tree.node_protocol import NodeProtocol
 from utils.util_equivalence_classes import assert_pair_equivalence, make_parametersets_of_equivalence_classes
 
 
@@ -41,12 +41,12 @@ class TestPythonMatcherBasic:
     PATTERN_FACTORY = PythonPatternFactory(PythonFactory(PythonRstNode))
 
     # a and b have the same type as the return type of PATTERN_FACTORY.create_statements,
-    # which is Sequence[AstProtocol]
+    # which is Sequence[NodeProtocol]
     @pytest.mark.parametrize(
         "a, b, expected",
         make_parametersets_of_equivalence_classes("trivia", PATTERN_FACTORY.create_statements, TRIVIA_CLASSES),
     )
-    def test_pairs_of_equivalence_classes(self, a: Sequence[AstProtocol], b: Sequence[AstProtocol], expected: bool):
+    def test_pairs_of_equivalence_classes(self, a: Sequence[NodeProtocol], b: Sequence[NodeProtocol], expected: bool):
         assert_pair_equivalence(a, b, expected)
 
 

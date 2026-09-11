@@ -9,7 +9,6 @@ from hamcrest import (
     contains_string,
     empty,
     has_length,
-    instance_of,
     is_,
 )
 from hypothesis import HealthCheck, given, settings
@@ -17,20 +16,8 @@ from hypothesis import HealthCheck, given, settings
 import targets
 from renaissance.integrations.python.ast.factory import PythonFactory, PythonPatternFactory
 from renaissance.integrations.python.ast.rst_node import PythonRstNode
-from renaissance.integrations.types import (
-    Catch,
-    FormattedString,
-    Match,
-    MatchAs,
-    MatchCase,
-    MatchStar,
-    NamedExpr,
-    Slice,
-    Starred,
-    Statement,
-    TypeAlias,
-)
 from renaissance.syntax_tree import ASTShower
+from renaissance.syntax_tree.semantic_kind import SemanticKind
 from utils_for_tests import reject_unsupported_code
 
 
@@ -44,42 +31,60 @@ class TestPythonRstNode:
 
     def test_type_alias(self):
         it = self.factory.create_from_text("type UserId = int", "context.py")
-        assert_that(it.children[0].ast_type(), is_(TypeAlias))
+        assert_that(it.children[0].parser_kind, is_("TypeAlias"))
+
+    def test_exposes_parser_and_semantic_kinds(self):
+        root = self.factory.create_from_text("def f(value):\n    return value\n")
+        function = root.children[0]
+        parameter = function.children[0].children[1].children[0]
+        returned_name = function.children[1].children[0].children[0]
+
+        assert function.parser_kind == "FunctionDef"
+        assert function.semantic_kind is SemanticKind.FUNCTION
+        assert parameter.semantic_kind is SemanticKind.PARAMETER
+        assert returned_name.semantic_kind is SemanticKind.NAME
+
+    def test_unknown_python_kind_keeps_parser_name(self):
+        root = self.factory.create_from_text("x = {1, 2}")
+        set_node = root.children[0].children[1]
+
+        assert set_node.parser_kind == "Set"
+        assert set_node.semantic_kind is SemanticKind.NODE
 
     def test_slice(self):
         it = self.pattern_factory.create_expression("items[1:2:3]")
-        assert_that(it.children[1].ast_type(), is_(Slice))
+        assert_that(it.children[1].parser_kind, is_("Slice"))
 
     def test_named_expr(self):
         it = self.pattern_factory.create_statement("if n:= len(items): pass")
-        assert_that(it.children[0].ast_type(), is_(NamedExpr))
+        assert_that(it.children[0].parser_kind, is_("NamedExpr"))
 
     def test_named_expr_simple(self):
         it = self.pattern_factory.create_statement("(n:= 3)")
-        assert_that(it.children[0].ast_type(), is_(NamedExpr))
+        assert_that(it.children[0].parser_kind, is_("NamedExpr"))
 
     # why not ""?
     def test_starred(self):
         it = self.pattern_factory.create_statement("*x =[1,2]")
-        assert_that(it.children[0].children[0].ast_type(), is_(Starred))
+        assert_that(it.children[0].children[0].parser_kind, is_("Starred"))
 
     def test_formatted_value(self):
         it = self.pattern_factory.create_expression('f"{one}two"')
-        assert_that(it.children[0].ast_type(), is_(FormattedString))
+        assert_that(it.children[0].parser_kind, is_("FormattedValue"))
 
     def test_except_handler(self):
         it = self.pattern_factory.create_statement("try: pass\nexcept NameError:pass")
-        assert_that(it.children[1].children[0].ast_type(), is_(Catch))
+        assert_that(it.children[1].children[0].parser_kind, is_("ExceptHandler"))
 
     def test_match_stmt(self):
         sample_code = (
             'match data:\n  case [first, *rest]: return f"List with first element {first} and {len(rest)} more items"\n  case _: pass'
         )
         stmt = self.pattern_factory.create_statement(sample_code)
-        assert_that(stmt.ast_type(), is_(Match))
-        assert_that(stmt.children[1].children[0].ast_type(), is_(MatchCase))
-        assert_that(stmt.children[1].children[0].children[0].children[1].ast_type(), is_(MatchStar))
-        assert_that(stmt.children[1].children[0].children[0].children[0].ast_type(), is_(MatchAs))
+        assert_that(stmt.parser_kind, is_("Match"))
+        assert_that(stmt.children[1].children[0].parser_kind, is_("match_case"))
+        assert_that(stmt.children[1].children[0].children[0].children[1].parser_kind, is_("MatchStar"))
+        assert_that(stmt.children[1].children[0].children[0].children[0].parser_kind, is_("MatchAs"))
 
     def test_show_call(self):
         atu = self.factory.create_from_text("ba(55)\nca(555)\nlo(4444)\nna=55", "apple.py")
@@ -170,9 +175,9 @@ class Parent:
         factory = PythonFactory(PythonRstNode)
         node = factory.create_from_text(code)
         print(f"testing {code=} with PythonRstNode")
-        assert_that(node.children[0].ast_type(), instance_of(Statement), f"{code=}")
+        assert_that(node.children[0].semantic_kind is not SemanticKind.NODE, is_(True), f"{code=}")
 
     def test_corner_case(self):
         factory = PythonFactory(PythonRstNode)
         node = factory.create_from_text("class ŻP𭻊鲖ÉØ_ąň𣑗: pass\n")
-        assert_that(node.children[0].ast_type(), instance_of(Statement))
+        assert_that(node.children[0].semantic_kind is not SemanticKind.NODE, is_(True))

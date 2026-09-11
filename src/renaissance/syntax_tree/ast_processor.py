@@ -2,12 +2,13 @@ from collections.abc import Callable, Iterator, Sequence
 from pathlib import Path
 
 import renaissance.syntax_tree.match_finder
-from renaissance.integrations.types import Type
 from renaissance.syntax_tree import ASTNode
 from renaissance.syntax_tree.ast_factory import ASTFactory
-from renaissance.syntax_tree.ast_finder import ASTFinder, find_ast_type
+from renaissance.syntax_tree.ast_finder import ASTFinder, find_semantic_kind
 from renaissance.syntax_tree.ast_rewriter import ASTRewriter
 from renaissance.syntax_tree.match_finder import PatternMatch
+from renaissance.syntax_tree.node_protocol import NodeProtocol
+from renaissance.syntax_tree.semantic_kind import SemanticKind
 
 
 class ASTProcessor:
@@ -77,8 +78,8 @@ class ASTProcessor:
     def find_all(self, function: Callable[[ASTNode], Iterator[ASTNode] | bool]) -> Sequence[ASTNode]:
         return ASTFinder.find_all(self.__root_node, function)
 
-    def find_ast_type(self, kind: type[Type]) -> Sequence[ASTNode]:
-        return find_ast_type(self.__root_node, kind)
+    def find_semantic_kind(self, kind: SemanticKind) -> Sequence[NodeProtocol]:
+        return find_semantic_kind(self.__root_node, kind)
 
     def find_match(self, *patterns_list, recursive: bool = True) -> Sequence[PatternMatch]:
         return renaissance.syntax_tree.match_finder.find_all(

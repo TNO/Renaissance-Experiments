@@ -1,5 +1,6 @@
 # __init__.py
-from ..utils.text_utils import TextUtils
+from renaissance.utils.text_utils import TextUtils
+
 from .ast_factory import ASTFactory
 from .ast_finder import ASTFinder
 from .ast_node import ASTNode, ASTReference, VisitorResult

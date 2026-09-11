@@ -1,6 +1,19 @@
 from collections import deque
+from contextlib import contextmanager
+from contextvars import ContextVar
 
 from renaissance.integrations import MATCH_ALL, MATCH_ONE
+
+DISPLAY_PARSER_KIND: ContextVar[bool] = ContextVar("display_parser_kind", default=False)
+
+
+@contextmanager
+def display_context(display_parser_kind: bool):
+    token = DISPLAY_PARSER_KIND.set(display_parser_kind)
+    try:
+        yield
+    finally:
+        DISPLAY_PARSER_KIND.reset(token)
 
 
 def replace_dollar(text: str) -> str:
@@ -81,7 +94,7 @@ def match_props(mine, other, irrelevant_props) -> bool:
 def match_children(mine, other, irrelevant_kinds) -> bool:
     if mine is None or other is None:
         return mine == other
-    return all((i < len(mine) and mine[i] == child) or child.ast_type.__name__ in irrelevant_kinds for i, child in enumerate(other))
+    return all((i < len(mine) and mine[i] == child) or child.parser_kind in irrelevant_kinds for i, child in enumerate(other))
 
 
 def format_node(node) -> str:
@@ -89,8 +102,10 @@ def format_node(node) -> str:
     properties_text = "" if not node.show_props else node.properties
     prefix = " " if len(raw_lines) < 2 else f"\n    {node.indent}"
     formatted_lines = [f"{prefix}|{line}|" for line in raw_lines]
+    semantic_name = node.semantic_kind.value
+    kind = node.parser_kind if DISPLAY_PARSER_KIND.get() or semantic_name == "node" else semantic_name
     return (
-        f"{node.indent}({node.ast_type.__name__}, {node.name}, "
+        f"{node.indent}({kind}, {node.name}, "
         f"{node.filename}[{node.offset}:{node.offset + node.length}])"
         f"{properties_text}:{''.join(formatted_lines)}\n"
     )

@@ -4,7 +4,7 @@ from more_itertools import flatten
 
 from renaissance.integrations.clang import ClangASTNode
 from renaissance.integrations.clang.clang_json_ast_node import ClangJsonASTNode
-from renaissance.integrations.types import CompoundStatement, VariableDef
+from renaissance.integrations.clang.predicates import is_clang_compound_statement
 from renaissance.recipes import CleanupRefactoring
 from renaissance.syntax_tree import (
     ASTFactory,
@@ -13,7 +13,8 @@ from renaissance.syntax_tree import (
     ASTRewriter,
     ASTShower,
 )
-from renaissance.syntax_tree.ast_finder import find_ast_type
+from renaissance.syntax_tree.ast_finder import find_nodes
+from renaissance.syntax_tree.semantic_kind import SemanticKind
 
 example_code = """
         int a = 1;
@@ -76,7 +77,10 @@ def remove_unused_variable_low_level(node_type1: type[ASTNode]):
 
     ASTShower.show_node(atu)
     # search matches and replace them
-    funcs = flatten(find_ast_type(func, VariableDef) for func in (find_ast_type(atu, CompoundStatement)))
+    funcs = flatten(
+        find_nodes(func, lambda node: node.semantic_kind is SemanticKind.DECLARATION)
+        for func in find_nodes(atu, is_clang_compound_statement)
+    )
     [rewriter.remove(node.parent, True, True) for node in funcs if len(node.referenced_by) == 0]
 
     # print the rewritten code
