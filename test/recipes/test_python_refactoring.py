@@ -1,3 +1,6 @@
+"""Tests for the PythonRefactoring base class."""
+
+import ast
 import textwrap
 
 from hamcrest import assert_that, contains_string, is_
@@ -110,3 +113,26 @@ class TestPythonRefactoring:
 
         subject = UnitToPytest("test_foo.py")
         assert_that(len(subject.body), is_(2))
+
+    # ------------------------------------------------------------------
+    # find_rst_node
+    # ------------------------------------------------------------------
+
+    def test_find_rst_node_returns_wrapper_for_raw_ast_node(self, mocker):
+        self._patch_factory(
+            mocker,
+            """
+            def foo():
+                pass
+            """,
+            "test_foo.py",
+        )
+        from renaissance.recipes.unit_to_pytest import UnitToPytest
+
+        subject = UnitToPytest("test_foo.py")
+        module = subject.root.node
+        target = next(node for node in ast.walk(module) if isinstance(node, ast.FunctionDef))
+
+        found = subject.find_rst_node(target)
+
+        assert_that(found.node, is_(target))
