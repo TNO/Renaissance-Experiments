@@ -1,6 +1,6 @@
 from pytest_bdd import scenario, when
 
-from renaissance.recipes.unit2pytest import Unit2Pytest
+from renaissance.recipes.unit_to_pytest import UnitToPytest
 from steps.test_steps import *  # noqa: F403 -- pytest-bdd step aggregation
 
 
@@ -11,6 +11,6 @@ def test_convert_unit_to_pytest():
 
 @when("I convert it to pytest")
 def step_when_convert(context):
-    converter = Unit2Pytest(context.file)
+    converter = UnitToPytest(context.file)
     converter.run()
     context.atu = context.factory.create(context.file)

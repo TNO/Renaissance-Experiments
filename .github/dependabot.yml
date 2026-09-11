@@ -7,6 +7,11 @@ updates:
       day: "sunday"
     open-pull-requests-limit: 10
     labels: ["dependencies"]
+
+    ignore:
+      - dependency-name: "clang"
+        versions: [">=18.1.9"]
+
     groups:
       python-minor-patch:
         update-types: ["minor", "patch"]

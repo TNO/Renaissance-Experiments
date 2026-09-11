@@ -2,7 +2,7 @@ from pathlib import Path
 
 from pytest_bdd import scenario, when
 
-from renaissance.recipes.taut2pyunit import Taut2Pyunit
+from renaissance.recipes.taut_to_python_unittest import TautToPythonUnittest
 from steps.conftest import FEATURES_BASE_DIR
 
 
@@ -18,7 +18,7 @@ def test_taut_test():
 
 @when("I convert taut to unittest")
 def step_when_convert(context):
-    converter = Taut2Pyunit(context.file)
+    converter = TautToPythonUnittest(context.file)
     converter.in_memory = True
     converter.run()
     context.atu = context.factory.create(context.file)

@@ -109,27 +109,19 @@ class TextUtils:
             f.write(text)
 
 
-def signature2id(signature: str) -> str:
+def signature_to_id(signature: str) -> str:
     text = signature.replace("\n", " ")
     return re.sub(r"[^\w\s]", "", text)[:30]  # Remove punctuation, limit length
 
 
-def camel_case(snippet: str) -> str:
-    parts = snippet.split("_")
-    return parts[0] + "".join(word.capitalize() for word in parts[1:])
-
-
 def snake_case(snippet: str) -> str:
-    """Convert a PascalCase/camelCase identifier to snake_case.
+    """Converts a camelCase or PascalCase string to snake_case, preserving acronyms as single words.
 
-    Splits on two kinds of word boundary: an acronym followed by a word
-    (e.g. "HTMLParser" -> "HTML_Parser"), and a lowercase letter followed
-    by an uppercase letter (e.g. "TypeVarCheck" -> "Type_Var_Check"). A
-    digit does not trigger a split, so "Unit2Pytest" stays "unit2pytest".
+    Leaves a string already in snake_case unchanged.
     """
-    s1 = re.sub(r"([A-Z]+)([A-Z][a-z])", r"\1_\2", snippet)
-    s2 = re.sub(r"([a-z])([A-Z])", r"\1_\2", s1)
-    return s2.lower()
+    snippet = re.sub(r"([A-Z]+)([A-Z][a-z])", r"\1_\2", snippet)
+    snippet = re.sub(r"([a-z0-9])([A-Z])", r"\1_\2", snippet)
+    return snippet.lower()
 
 
 def fix_indent(code_string: str) -> str | None:
