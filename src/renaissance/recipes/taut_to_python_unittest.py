@@ -10,7 +10,7 @@ from renaissance.syntax_tree.match_finder import match_pattern
 from renaissance.syntax_tree.semantic_kind import SemanticKind
 
 
-class Taut2Pyunit(PythonRefactoring):
+class TautToPythonUnittest(PythonRefactoring):
     def __init__(self, file):
         super().__init__(file)
         self.white_list_reg = r"_test|_unittest|_tests"

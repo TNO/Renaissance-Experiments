@@ -7,7 +7,7 @@ from renaissance.recipes.python_refactoring import PythonRefactoring
 class SimplifyRenaissance(PythonRefactoring):
     def __init__(self, file):
         super().__init__(file)
-        self.white_list_pattern = "unit2pytest"
+        self.white_list_pattern = "unit_to_pytest"
         self.black_list_pattern = "SimplifyRenaissance"
 
     @override

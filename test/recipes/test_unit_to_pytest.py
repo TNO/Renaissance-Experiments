@@ -5,12 +5,12 @@ from hamcrest import assert_that, contains_string, ends_with, is_, not_
 
 import targets
 from renaissance.integrations.python.ast.rst_node import PythonRstNode
-from renaissance.recipes.unit2pytest import Unit2Pytest
+from renaissance.recipes.unit_to_pytest import UnitToPytest
 
 
-class TestUnit2Pytest:
+class TestUnitToPytest:
     def test_init(self):
-        subject = Unit2Pytest(Path(targets.__file__).parent / "demo.py")
+        subject = UnitToPytest(Path(targets.__file__).parent / "demo.py")
         assert_that(subject.filename, ends_with("demo.py"))
 
     def test_commit_does_nothing_when_not_changed(self, mocker):
@@ -37,13 +37,13 @@ class TestUnit2Pytest:
         assert_that(subject.apply_to_string(), contains_string("class TestClass1:"))
         assert_that(subject.apply_to_string(), contains_string("class TestClass2:"))
 
-    def _create(self, mocker, text) -> Unit2Pytest:
+    def _create(self, mocker, text) -> UnitToPytest:
         code = textwrap.dedent(text)
         mocker.patch(
             "renaissance.integrations.python.ast.factory.PythonFactory.create",
             return_value=PythonRstNode.load_from_text(code),
         )
-        subject = Unit2Pytest("x.py")
+        subject = UnitToPytest("x.py")
         subject.in_memory = True
         return subject
 

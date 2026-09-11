@@ -109,20 +109,19 @@ class TextUtils:
             f.write(text)
 
 
-def signature2id(signature: str) -> str:
+def signature_to_id(signature: str) -> str:
     text = signature.replace("\n", " ")
     return re.sub(r"[^\w\s]", "", text)[:30]  # Remove punctuation, limit length
 
 
-def camel_case(snippet: str) -> str:
-    parts = snippet.split("_")
-    return parts[0] + "".join(word.capitalize() for word in parts[1:])
-
-
 def snake_case(snippet: str) -> str:
-    # TODO: Why is exactly one non-capital character allowed in the second group?
-    # Is the regex correct? Should it be [A-Z][a-z]* or [A-Z][a-z]+ instead of [A-Z][a-z]?
-    return re.sub(r"([A-Z][A-Za-z]+)([A-Z][a-z])", r"\1_\2", snippet).lower()
+    """Converts a camelCase or PascalCase string to snake_case, preserving acronyms as single words.
+
+    Leaves a string already in snake_case unchanged.
+    """
+    snippet = re.sub(r"([A-Z]+)([A-Z][a-z])", r"\1_\2", snippet)
+    snippet = re.sub(r"([a-z0-9])([A-Z])", r"\1_\2", snippet)
+    return snippet.lower()
 
 
 def fix_indent(code_string: str) -> str | None:

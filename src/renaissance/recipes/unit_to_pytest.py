@@ -11,7 +11,7 @@ from renaissance.syntax_tree.node_protocol import NodeProtocol
 from renaissance.syntax_tree.semantic_kind import SemanticKind
 
 
-class Unit2Pytest(PythonRefactoring):
+class UnitToPytest(PythonRefactoring):
     def __init__(self, file):
         """Hide internal administration in the parent class so that this class you only deals with specific refactors."""
         super().__init__(file)
