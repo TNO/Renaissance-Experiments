@@ -1284,7 +1284,7 @@ wheels = [
 [[package]]
 name = "renaissance"
 version = "0.0.1"
-source = { virtual = "." }
+source = { editable = "." }
 dependencies = [
     { name = "antlr4-python3-runtime" },
     { name = "ast-comments" },
